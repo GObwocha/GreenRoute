@@ -120,3 +120,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+
+STATICFILES_DIRS = [BASE_DIR / 'static', 
+    #this tells django where the static files are located. this is because the templates are not in any of the apps.
+]
+
