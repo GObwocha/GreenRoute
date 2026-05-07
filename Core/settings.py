@@ -37,6 +37,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'main', #this is our first app within the core project. 
+    #subsequent apps will be added here witht the same format. 
+
+    #THIRD-PARTY APPS
+    'django_daraja', #this is a third-party app for M-PESA integration. 
 ]
 
 MIDDLEWARE = [
