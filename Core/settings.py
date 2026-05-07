@@ -126,3 +126,7 @@ STATICFILES_DIRS = [BASE_DIR / 'static',
     #this tells django where the static files are located. this is because the templates are not in any of the apps.
 ]
 
+# Default primary key field type
+# https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
