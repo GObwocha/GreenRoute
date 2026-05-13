@@ -6,14 +6,14 @@ class MainConfig(AppConfig):
     name = 'main'
     default_auto_field = 'django.db.models.BigAutoField'
 
-    kilimani_graph = None
+    nairobi_graph = None
 
     def ready(self):
         import os
         if os.environ.get('RUN_MAIN'):
-            print("Booting up Django: Loading Kilimani map...")
+            print("Booting up Django: Loading Nairobi map...")
 
-            graph = ox.graph_from_place("Kilimani, Nairobi, Kenya", network_type='drive')
+            graph = ox.graph_from_place("Nairobi, Kenya", network_type='drive')
 
             UPHILL_PENALTY = 20
             DOWNHILL_PENALTY = 2
@@ -29,5 +29,5 @@ class MainConfig(AppConfig):
                     eco_weight = length
                 data['eco_weight'] = eco_weight
 
-            MainConfig.kilimani_graph = graph
+            MainConfig.nairobi_graph = graph
             print("Map successfully loaded into Django's memory")
