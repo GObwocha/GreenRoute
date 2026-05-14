@@ -11,9 +11,6 @@ import networkx as nx
 import osmnx as ox
 
 # Create your views here.
-def index(request):
-    return render(request, 'index.html')
-
 def client_dashboard(request):
     # This view serves the public interactive Eco-Planner dashboard
     return render(request, 'client_dashboard.html')
