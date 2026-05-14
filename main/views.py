@@ -69,3 +69,6 @@ def calculate_route(request):
             "status": "error",
             "message": f"An internal routing error occorred: {str(e)}"
             }, status=500)
+
+def admin_panel(request):
+    return render(request, 'admin_panel.html')
