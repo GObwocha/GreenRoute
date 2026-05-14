@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Eco-Planner - GreenRoute{% endblock %}
+
+{% block body_class %}client-dashboard-body{% endblock %}
+
+{% block content %}
+<div class="client-wrapper">
+    <!-- Interactive Map Container -->
+    <div id="eco-map" class="map-container"></div>
+
+    <!-- Floating UI Panel -->
+    <div class="floating-panel">
+        <header class="panel-header">
+            <div class="logo-icon-small">
+                <i class="fa-solid fa-leaf"></i>
+            </div>
+            <h2>Eco-Planner</h2>
+        </header>
+
+        <form id="route-form" class="route-form">
+            <div class="form-group-modern">
+                <label>Origin Coordinate</label>
+                <div class="input-modern">
+                    <i class="fa-solid fa-location-dot" style="color: #94A3B8;"></i>
+                    <input type="text" id="start-lng" placeholder="Longitude" value="36.8219" required>
+                    <input type="text" id="start-lat" placeholder="Latitude" value="-1.2921" required>
+                </div>
+            </div>
+
+            <div class="form-group-modern">
+                <label>Destination Coordinate</label>
+                <div class="input-modern">
+                    <i class="fa-solid fa-flag-checkered" style="color: var(--primary-color);"></i>
+                    <input type="text" id="end-lng" placeholder="Longitude" value="36.7900" required>
+                    <input type="text" id="end-lat" placeholder="Latitude" value="-1.2650" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-calculate" id="btn-calc">
+                <i class="fa-solid fa-route"></i> Calculate Green Route
+            </button>
+        </form>
+
+        <div id="eco-metrics" class="eco-metrics-card hidden">
+            <h3>Route Analysis</h3>
+            <div class="metric-row">
+                <div class="metric">
+                    <span class="metric-label">Path Nodes</span>
+                    <strong id="metric-nodes" class="metric-value">--</strong>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Status</span>
+                    <strong id="metric-status" class="metric-value success">Optimized</strong>
+                </div>
+            </div>
+            <div class="eco-impact">
+                <i class="fa-solid fa-seedling"></i>
+                <span>Estimated Eco-Savings active!</span>
+            </div>
+        </div>
+
+        <div class="panel-footer">
+            <a href="{% url 'admin_login' %}"><i class="fa-solid fa-user-shield"></i> Admin Portal</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
