@@ -79,6 +79,7 @@
             letter-spacing: -0.5px;
             background: linear-gradient(to right, #fff, #94A3B8);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
@@ -166,6 +167,26 @@
             max-width: 1400px;
             width: 100%;
             margin: 0 auto;
+        }
+
+        .msg-item {
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+
+        .msg-success {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--primary-color);
+            border: 1px solid var(--primary-color);
+        }
+
+        .msg-error {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #FCA5A5;
+            border: 1px solid var(--error-color);
         }
 
         /* Dashboard Stats Grid */
@@ -321,7 +342,7 @@
             {% if messages %}
             <div style="margin-bottom: 24px;">
                 {% for message in messages %}
-                <div style="padding: 16px; border-radius: 8px; font-size: 14px; font-weight: 500; {% if message.tags == 'success' %}background-color: rgba(16, 185, 129, 0.1); color: var(--primary-color); border: 1px solid var(--primary-color);{% else %}background-color: rgba(239, 68, 68, 0.1); color: #FCA5A5; border: 1px solid var(--error-color);{% endif %}">
+                <div class="msg-item {% if message.tags == 'success' %}msg-success{% else %}msg-error{% endif %}">
                     {{ message }}
                 </div>
                 {% endfor %}
