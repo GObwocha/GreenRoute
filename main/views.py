@@ -14,6 +14,10 @@ import osmnx as ox
 def index(request):
     return render(request, 'index.html')
 
+def client_dashboard(request):
+    # This view serves the public interactive Eco-Planner dashboard
+    return render(request, 'client_dashboard.html')
+
 def calculate_route(request):
     #1. Safely grab data from URL
     start_lat_raw = request.GET.get('start_lat')
