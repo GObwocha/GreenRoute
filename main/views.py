@@ -78,48 +78,65 @@ def calculate_route(request):
         orig_node = ox.distance.nearest_nodes(graph, start_lng, start_lat)
         dest_node = ox.distance.nearest_nodes(graph, end_lng, end_lat)
 
-        # A. Create a temporary copy of the graph so we don't permanently alter the memory
-        # (Otherwise traffic jams from 8 AM will still be there at 2 PM)
+        # Create a temporary copy of the graph to keep the master memory pristine
         temp_graph = graph.copy()
 
-        # B. Get the bounding box of Kilimani to feed to TomTom
-        # (approximate bounding box for the Kilimani area)
-        kilimani_bbox = (36.76, -1.30, 36.81, -1.27) 
+        # Approximate bounding box for the Kilimani map area
+        nairobi_bbox = (36.65, -1.45, 37.11, -1.15)
         
-        # C. Fetch live jams from TomTom
-        jam_coords = get_live_traffic_penalties(kilimani_bbox)
+        # Fetch live traffic incident locations from TomTom
+        jam_coords = get_live_traffic_penalties(nairobi_bbox)
 
-        # D. Apply the Dynamic Traffic Penalty
+        # Map out any active traffic jam nodes
+        jam_nodes = set()
         if jam_coords:
-            # We snap the traffic jam GPS coordinates to our OSM map nodes
-            jam_nodes = set()
             for lat, lng in jam_coords:
                 jam_nodes.add(ox.distance.nearest_nodes(temp_graph, lng, lat))
 
-            # Loop through the map and penalize any road connected to a traffic jam
-            TRAFFIC_MULTIPLIER = 10 # Makes a gridlocked road "feel" 10x longer
-            
-            for u, v, key, data in temp_graph.edges(keys=True, data=True):
-                if u in jam_nodes or v in jam_nodes:
-                    data['eco_weight'] = data['eco_weight'] * TRAFFIC_MULTIPLIER
+        # --- PENALTY CONFIGURATIONS ---
+        TRAFFIC_MULTIPLIER = 10     # Gridlocked roads feel 10x longer
+        SURFACE_MULTIPLIER = 5      # Unpaved/dirt roads feel 5x longer
+        RESTRICTED_MULTIPLIER = 100 # Massive penalty to effectively block private gates
 
-        # E. Calculate the route using the traffic-adjusted map
+        # Process every single road segment within the active bounding map
+        for u, v, key, data in temp_graph.edges(keys=True, data=True):
+            
+            # 1. LIVE TRAFFIC PENALTY
+            if u in jam_nodes or v in jam_nodes:
+                data['eco_weight'] = data['eco_weight'] * TRAFFIC_MULTIPLIER
+
+            # 2. ROAD QUALITY CHECK
+            # Safely read surface data (handles cases where OSM stores attributes as lists)
+            surface_attr = data.get('surface', 'paved')
+            surface = surface_attr[0] if isinstance(surface_attr, list) else surface_attr
+            
+            if surface in ['unpaved', 'dirt', 'mud', 'gravel', 'ground']:
+                data['eco_weight'] = data['eco_weight'] * SURFACE_MULTIPLIER
+
+            # 3. RESTRICTED ACCESS CHECK
+            # Check for gates, private driveways, or closed pathways
+            access_attr = data.get('access', 'yes')
+            access = access_attr[0] if isinstance(access_attr, list) else access_attr
+            
+            if access in ['private', 'no', 'delivery']:
+                data['eco_weight'] = data['eco_weight'] * RESTRICTED_MULTIPLIER
+
+        # Run the shortest path logic over the heavily weighted, customized map
         route = nx.shortest_path(temp_graph, orig_node, dest_node, weight='eco_weight')
 
-        # Convert back to GPS coordinates
+        # Convert the node path back into a serializable list of GPS coordinates
         route_coords = [{"lat": temp_graph.nodes[node]['y'], "lng": temp_graph.nodes[node]['x']} for node in route]
 
         return JsonResponse({
             "status": "success",
-            "traffic_data_applied": bool(jam_coords), # Let the frontend know if we used live data
+            "traffic_data_applied": bool(jam_coords),
             "path": route_coords
         })
-    
-    #ERROR CHECK 3: No physical road connects these points
+
     except nx.NetworkXNoPath:
         return JsonResponse({
-            "status": "error",
-            "message": "No drivable route exists between these two points on the current map"
+            "status": "error", 
+            "message": "No accessible, public, or drivable route exists between these points."
         }, status=400)
     
     except Exception as e:
