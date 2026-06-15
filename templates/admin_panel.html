@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - GreenRoute Engine{% endblock %}
+
+{% block content %}
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo-icon"><i class="fa-solid fa-leaf"></i></div>
+            <div class="sidebar-title">GreenRoute</div>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{% url 'admin_panel' %}" class="sidebar-link active"><i class="fa-solid fa-chart-pie"></i><span>Dashboard</span></a></li>
+            <li><a href="#" class="sidebar-link"><i class="fa-solid fa-route"></i><span>Eco Routes</span></a></li>
+            <li><a href="#" class="sidebar-link"><i class="fa-solid fa-users"></i><span>Users</span></a></li>
+            <li><a href="#" class="sidebar-link"><i class="fa-solid fa-map-location-dot"></i><span>Map Nodes</span></a></li>
+            <li><a href="#" class="sidebar-link"><i class="fa-solid fa-gear"></i><span>Settings</span></a></li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-wrapper">
+        <!-- Top Navbar -->
+        <header class="top-navbar">
+            <h1 class="page-title">Admin Dashboard</h1>
+            <div class="user-profile">
+                <span style="font-size: 14px; color: var(--text-muted);">Welcome, <strong style="color: var(--text-main);">{{ request.user.username|default:"Admin" }}</strong></span>
+                <div class="avatar">{{ request.user.username|first|upper|default:"A" }}</div>
+                <a href="{% url 'admin_logout' %}" style="color: var(--error-color); text-decoration: none; margin-left: 16px; font-size: 14px; font-weight: 600;"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+            </div>
+        </header>
+
+        <!-- Main Body Grid -->
+        <main class="content-container">
+            <!-- Messages / Alerts -->
+            {% if messages %}
+            <div style="margin-bottom: 24px;">
+                {% for message in messages %}
+                <div class="msg-item {% if message.tags == 'success' %}msg-success{% else %}msg-error{% endif %}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-card-title">Total API Queries</div>
+                    <div class="stat-card-value">1,420</div>
+                    <i class="fa-solid fa-server stat-icon"></i>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">Fuel Saved (Est.)</div>
+                    <div class="stat-card-value">342.5 L</div>
+                    <i class="fa-solid fa-gas-pump stat-icon"></i>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">Active Graph Nodes</div>
+                    <div class="stat-card-value">84,521</div>
+                    <i class="fa-solid fa-circle-nodes stat-icon"></i>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">System Load</div>
+                    <div class="stat-card-value" style="color: var(--primary-color);">Optimal</div>
+                    <i class="fa-solid fa-microchip stat-icon"></i>
+                </div>
+            </div>
+
+            <!-- Provisioning Form Section (Admin Only) -->
+            {% if request.user.is_staff or request.user.is_superuser %}
+            <section class="table-section" style="margin-bottom: 32px; padding: 28px;">
+                <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 16px; margin-bottom: 24px;">
+                    <h2 class="table-title" style="color: var(--primary-color); display: flex; align-items: center; gap: 10px;">
+                        <i class="fa-solid fa-user-plus"></i> Provision Public Access Account
+                    </h2>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Only authorized administrators can generate valid access credentials for public clients.</p>
+                </div>
+
+                <form action="{% url 'admin_register_user' %}" method="POST" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 20px; align-items: end;">
+                    {% csrf_token %}
+                    <div>
+                        <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px;">New Username</label>
+                        <input type="text" name="new_username" placeholder="public_client_1" required style="width: 100%; background: var(--bg-base); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 16px; color: var(--text-main); font-size: 14px; outline: none;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px;">Client Email</label>
+                        <input type="email" name="new_email" placeholder="client@domain.com" required style="width: 100%; background: var(--bg-base); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 16px; color: var(--text-main); font-size: 14px; outline: none;">
+                    </div>
+                    <div>
+                        <button type="submit" style="background: linear-gradient(to right, var(--primary-color), var(--primary-dark)); color: #0B0F19; font-weight: 600; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; height: 45px; display: flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Generate Credential
+                        </button>
+                    </div>
+                </form>
+                <div style="margin-top: 16px; font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-circle-info" style="color: var(--primary-color);"></i>
+                    <span>A cryptographically secure password will be automatically generated and displayed upon successful creation.</span>
+                </div>
+            </section>
+            {% endif %}
+
+            <!-- Recent Requests Table Placeholder -->
+            <section class="table-section">
+                <div class="table-header">
+                    <h2 class="table-title">Recent Routing Queries</h2>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Origin</th>
+                            <th>Destination</th>
+                            <th>Nodes Traversed</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Westlands (-1.265, 36.802)</td>
+                            <td>CBD (-1.284, 36.821)</td>
+                            <td>42 nodes</td>
+                            <td><span class="status-badge">Success</span></td>
+                        </tr>
+                        <tr>
+                            <td>Kilimani (-1.291, 36.786)</td>
+                            <td>Upper Hill (-1.299, 36.812)</td>
+                            <td>28 nodes</td>
+                            <td><span class="status-badge">Success</span></td>
+                        </tr>
+                        <tr>
+                            <td>Karen (-1.320, 36.711)</td>
+                            <td>Lavington (-1.278, 36.765)</td>
+                            <td>64 nodes</td>
+                            <td><span class="status-badge">Success</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+
+{% endblock %}
