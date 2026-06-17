@@ -1,0 +1,38 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Eco Routes - GreenRoute Engine{% endblock %}
+{% block admin_title %}Eco Routes{% endblock %}
+
+{% block admin_content %}
+<section class="table-section">
+    <div class="table-header">
+        <h2 class="table-title">All Routing Queries</h2>
+    </div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Origin</th>
+                <th>Destination</th>
+                <th>Distance</th>
+                <th>Emissions Prevented</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for route in routes %}
+            <tr>
+                <td>{{ route.start_location_name|default:route.start_lat|stringformat:".3f"|add:", "|add:route.start_lng|stringformat:".3f" }}</td>
+                <td>{{ route.end_location_name|default:route.end_lat|stringformat:".3f"|add:", "|add:route.end_lng|stringformat:".3f" }}</td>
+                <td>{{ route.distance_km|floatformat:2 }} km</td>
+                <td><span class="status-badge" style="background: rgba(16, 185, 129, 0.1); color: #10B981;">{{ route.co2_prevented_kg|floatformat:2 }} kg CO₂</span></td>
+                <td>{{ route.created_at|date:"M d, Y H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" style="text-align: center;">No routing queries found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

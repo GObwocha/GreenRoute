@@ -1,0 +1,33 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Map Nodes - GreenRoute Engine{% endblock %}
+{% block admin_title %}Map Nodes Overview{% endblock %}
+
+{% block admin_content %}
+<div class="stats-grid" style="margin-bottom: 32px;">
+    <div class="stat-card">
+        <div class="stat-card-title">Total Graph Nodes</div>
+        <div class="stat-card-value">{{ nodes }}</div>
+        <i class="fa-solid fa-circle-nodes stat-icon"></i>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-title">Total Edges (Road Segments)</div>
+        <div class="stat-card-value">{{ edges }}</div>
+        <i class="fa-solid fa-road stat-icon"></i>
+    </div>
+</div>
+
+<section class="table-section" style="padding: 24px;">
+    <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 16px; margin-bottom: 24px;">
+        <h2 class="table-title" style="color: var(--primary-color);">Map Graph Data</h2>
+        <p style="font-size: 13px; color: var(--text-muted); margin-top: 8px;">
+            The routing engine uses a graph representation of Nairobi's road network. 
+            The graph is loaded into memory on server boot to provide low-latency routing calculations.
+        </p>
+    </div>
+    <div style="color: var(--text-main); font-size: 14px;">
+        <p><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> Graph loaded successfully from memory.</p>
+        <p style="margin-top: 10px;">For performance reasons, raw node data is not displayed here. Use the TomTom API integration to fetch live traffic anomalies across these segments.</p>
+    </div>
+</section>
+{% endblock %}

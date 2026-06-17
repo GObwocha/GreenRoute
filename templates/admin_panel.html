@@ -1,69 +1,31 @@
-{% extends 'base.html' %}
+{% extends 'base_admin.html' %}
 
 {% block title %}Admin Dashboard - GreenRoute Engine{% endblock %}
+{% block admin_title %}Admin Dashboard{% endblock %}
 
-{% block content %}
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <div class="sidebar-logo-icon"><i class="fa-solid fa-leaf"></i></div>
-            <div class="sidebar-title">GreenRoute</div>
-        </div>
-        <ul class="sidebar-menu">
-            <li><a href="{% url 'admin_panel' %}" class="sidebar-link active"><i class="fa-solid fa-chart-pie"></i><span>Dashboard</span></a></li>
-            <li><a href="#" class="sidebar-link"><i class="fa-solid fa-route"></i><span>Eco Routes</span></a></li>
-            <li><a href="#" class="sidebar-link"><i class="fa-solid fa-users"></i><span>Users</span></a></li>
-            <li><a href="#" class="sidebar-link"><i class="fa-solid fa-map-location-dot"></i><span>Map Nodes</span></a></li>
-            <li><a href="#" class="sidebar-link"><i class="fa-solid fa-gear"></i><span>Settings</span></a></li>
-        </ul>
-    </aside>
-
-    <!-- Main Content -->
-    <div class="main-wrapper">
-        <!-- Top Navbar -->
-        <header class="top-navbar">
-            <h1 class="page-title">Admin Dashboard</h1>
-            <div class="user-profile">
-                <span style="font-size: 14px; color: var(--text-muted);">Welcome, <strong style="color: var(--text-main);">{{ request.user.username|default:"Admin" }}</strong></span>
-                <div class="avatar">{{ request.user.username|first|upper|default:"A" }}</div>
-                <a href="{% url 'admin_logout' %}" style="color: var(--error-color); text-decoration: none; margin-left: 16px; font-size: 14px; font-weight: 600;"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
-            </div>
-        </header>
-
-        <!-- Main Body Grid -->
-        <main class="content-container">
-            <!-- Messages / Alerts -->
-            {% if messages %}
-            <div style="margin-bottom: 24px;">
-                {% for message in messages %}
-                <div class="msg-item {% if message.tags == 'success' %}msg-success{% else %}msg-error{% endif %}">
-                    {{ message }}
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
+{% block admin_content %}
 
             <!-- Stats Grid -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-card-title">Total API Queries</div>
-                    <div class="stat-card-value">1,420</div>
-                    <i class="fa-solid fa-server stat-icon"></i>
+                    <div class="stat-card-title">Total Routes Planned</div>
+                    <div class="stat-card-value">{{ total_routes }}</div>
+                    <i class="fa-solid fa-route stat-icon"></i>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">Distance Travelled</div>
+                    <div class="stat-card-value">{{ total_distance }} km</div>
+                    <i class="fa-solid fa-road stat-icon"></i>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">Emissions Prevented (CO₂)</div>
+                    <div class="stat-card-value" style="color: var(--primary-color);">{{ total_co2_prevented }} kg</div>
+                    <i class="fa-solid fa-leaf stat-icon"></i>
                 </div>
                 <div class="stat-card">
                     <div class="stat-card-title">Fuel Saved (Est.)</div>
-                    <div class="stat-card-value">342.5 L</div>
+                    <div class="stat-card-value">{{ total_fuel_saved }} L</div>
                     <i class="fa-solid fa-gas-pump stat-icon"></i>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-card-title">Active Graph Nodes</div>
-                    <div class="stat-card-value">84,521</div>
-                    <i class="fa-solid fa-circle-nodes stat-icon"></i>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-card-title">System Load</div>
-                    <div class="stat-card-value" style="color: var(--primary-color);">Optimal</div>
-                    <i class="fa-solid fa-microchip stat-icon"></i>
                 </div>
             </div>
 
@@ -110,33 +72,26 @@
                         <tr>
                             <th>Origin</th>
                             <th>Destination</th>
-                            <th>Nodes Traversed</th>
-                            <th>Status</th>
+                            <th>Distance</th>
+                            <th>Emissions Prevented</th>
+                            <th>Date</th>
                         </tr>
                     </thead>
                     <tbody>
+                        {% for route in recent_routes %}
                         <tr>
-                            <td>Westlands (-1.265, 36.802)</td>
-                            <td>CBD (-1.284, 36.821)</td>
-                            <td>42 nodes</td>
-                            <td><span class="status-badge">Success</span></td>
+                            <td>{{ route.start_location_name|default:route.start_lat|stringformat:".3f"|add:", "|add:route.start_lng|stringformat:".3f" }}</td>
+                            <td>{{ route.end_location_name|default:route.end_lat|stringformat:".3f"|add:", "|add:route.end_lng|stringformat:".3f" }}</td>
+                            <td>{{ route.distance_km|floatformat:2 }} km</td>
+                            <td><span class="status-badge" style="background: rgba(16, 185, 129, 0.1); color: #10B981;">{{ route.co2_prevented_kg|floatformat:2 }} kg CO₂</span></td>
+                            <td>{{ route.created_at|date:"M d, H:i" }}</td>
                         </tr>
+                        {% empty %}
                         <tr>
-                            <td>Kilimani (-1.291, 36.786)</td>
-                            <td>Upper Hill (-1.299, 36.812)</td>
-                            <td>28 nodes</td>
-                            <td><span class="status-badge">Success</span></td>
+                            <td colspan="5" style="text-align: center;">No routing queries yet.</td>
                         </tr>
-                        <tr>
-                            <td>Karen (-1.320, 36.711)</td>
-                            <td>Lavington (-1.278, 36.765)</td>
-                            <td>64 nodes</td>
-                            <td><span class="status-badge">Success</span></td>
-                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </section>
-        </main>
-    </div>
-
 {% endblock %}

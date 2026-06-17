@@ -514,6 +514,11 @@ body {
     margin: 0;
 }
 
+.form-group-modern {
+    position: relative;
+    overflow: visible;
+}
+
 .form-group-modern label {
     display: block;
     font-size: 12px;
@@ -532,6 +537,8 @@ body {
     border-radius: 8px;
     padding: 0 12px;
     gap: 10px;
+    position: relative;
+    width: 100%;
 }
 
 .input-modern input {
@@ -546,6 +553,51 @@ body {
 
 .input-modern input::placeholder {
     color: rgba(255,255,255,0.3);
+}
+
+/* Location suggestions dropdown */
+.location-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1001;
+    margin-top: -8px;
+    padding-top: 8px;
+    display: block;
+    min-width: 100%;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.suggestion-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-main);
+    transition: background 0.15s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.suggestion-item:hover:not(.disabled) {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--primary-color);
+}
+
+.suggestion-item.disabled {
+    color: var(--text-muted);
+    cursor: not-allowed;
+    background: transparent;
 }
 
 .btn-calculate {

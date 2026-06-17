@@ -1,0 +1,44 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Users - GreenRoute Engine{% endblock %}
+{% block admin_title %}Registered Users{% endblock %}
+
+{% block admin_content %}
+<section class="table-section">
+    <div class="table-header">
+        <h2 class="table-title">System Users</h2>
+    </div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Date Joined</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.username }}</td>
+                <td>{{ user.email|default:"N/A" }}</td>
+                <td>
+                    {% if user.is_superuser %}
+                        <span class="status-badge" style="background: rgba(16, 185, 129, 0.2); color: var(--primary-color);">Super Admin</span>
+                    {% elif user.is_staff %}
+                        <span class="status-badge" style="background: rgba(59, 130, 246, 0.2); color: #3b82f6;">Staff</span>
+                    {% else %}
+                        <span class="status-badge" style="background: rgba(148, 163, 184, 0.2); color: var(--text-muted);">Client</span>
+                    {% endif %}
+                </td>
+                <td>{{ user.date_joined|date:"M d, Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="text-align: center;">No users found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}
