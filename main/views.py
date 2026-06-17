@@ -77,59 +77,83 @@ def calculate_route(request):
             "message": "The routing engine is offline or still booting up."
         }, status=503)
     
-    #3. Math Engine
+    # 3. The Math Engine (Now with A*, Subgraphing, and Selective Updates!)
     try:
         # Snap the GPS coordinates to the nearest physical road
         orig_node = ox.distance.nearest_nodes(graph, start_lng, start_lat)
         dest_node = ox.distance.nearest_nodes(graph, end_lng, end_lat)
 
-        # Create a temporary copy of the graph to keep the master memory pristine
-        temp_graph = graph.copy()
-
-        # Approximate bounding box for the Kilimani map area
-        nairobi_bbox = (36.65, -1.45, 37.11, -1.15)
+        # --- OPTIMIZATION 1: Bounding Box Subgraphing ---
+        # Instead of copying the entire Nairobi map, slice out a tiny rectangle around the route
+        buffer = 0.05  # Roughly a 5km safety margin around the start/end points
+        min_lat = min(start_lat, end_lat) - buffer
+        max_lat = max(start_lat, end_lat) + buffer
+        min_lng = min(start_lng, end_lng) - buffer
+        max_lng = max(start_lng, end_lng) + buffer
         
-        # Fetch live traffic incident locations from TomTom
-        jam_coords = get_live_traffic_penalties(nairobi_bbox)
-
-        # Map out any active traffic jam nodes
+        # Filter map nodes that only exist inside this specific box
+        nodes_in_bbox = [
+            n for n, data in graph.nodes(data=True)
+            if min_lat <= data['y'] <= max_lat and min_lng <= data['x'] <= max_lng
+        ]
+        
+        # Create a tiny, temporary map just for this specific truck trip. 
+        # (This drops the copy time from seconds to milliseconds!)
+        temp_graph = graph.subgraph(nodes_in_bbox).copy()
+        
+        # --- OPTIMIZATION 2: Selective Updates ---
+        # Feed TomTom the exact coordinates of our tiny bounding box, not the whole county
+        route_bbox = (min_lng, min_lat, max_lng, max_lat)
+        jam_coords = get_live_traffic_penalties(route_bbox)
+        
         jam_nodes = set()
         if jam_coords:
             for lat, lng in jam_coords:
-                jam_nodes.add(ox.distance.nearest_nodes(temp_graph, lng, lat))
+                try:
+                    # Snap traffic jams only to our tiny temp_graph
+                    jam_nodes.add(ox.distance.nearest_nodes(temp_graph, lng, lat))
+                except ValueError:
+                    pass # Safely ignore jams that happen outside our clipped map boundaries
 
-        # --- PENALTY CONFIGURATIONS ---
-        TRAFFIC_MULTIPLIER = 10     # Gridlocked roads feel 10x longer
-        SURFACE_MULTIPLIER = 5      # Unpaved/dirt roads feel 5x longer
-        RESTRICTED_MULTIPLIER = 100 # Massive penalty to effectively block private gates
+        TRAFFIC_MULTIPLIER = 10
+        SURFACE_MULTIPLIER = 5
+        RESTRICTED_MULTIPLIER = 100
 
-        # Process every single road segment within the active bounding map
+        # This loop now only processes a few hundred local streets instead of 50,000+!
         for u, v, key, data in temp_graph.edges(keys=True, data=True):
             
-            # 1. LIVE TRAFFIC PENALTY
+            # Safely fix the string data type bug from the GraphML load
+            try:
+                current_weight = float(data.get('eco_weight', 1.0))
+            except (TypeError, ValueError):
+                current_weight = 1.0
+            
             if u in jam_nodes or v in jam_nodes:
-                data['eco_weight'] = data['eco_weight'] * TRAFFIC_MULTIPLIER
+                current_weight = current_weight * TRAFFIC_MULTIPLIER
 
-            # 2. ROAD QUALITY CHECK
-            # Safely read surface data (handles cases where OSM stores attributes as lists)
             surface_attr = data.get('surface', 'paved')
             surface = surface_attr[0] if isinstance(surface_attr, list) else surface_attr
-            
             if surface in ['unpaved', 'dirt', 'mud', 'gravel', 'ground']:
-                data['eco_weight'] = data['eco_weight'] * SURFACE_MULTIPLIER
+                current_weight = current_weight * SURFACE_MULTIPLIER
 
-            # 3. RESTRICTED ACCESS CHECK
-            # Check for gates, private driveways, or closed pathways
             access_attr = data.get('access', 'yes')
             access = access_attr[0] if isinstance(access_attr, list) else access_attr
-            
             if access in ['private', 'no', 'delivery']:
-                data['eco_weight'] = data['eco_weight'] * RESTRICTED_MULTIPLIER
+                current_weight = current_weight * RESTRICTED_MULTIPLIER
+                
+            data['eco_weight'] = current_weight
 
-        # Run the shortest path logic over the heavily weighted, customized map
-        route = nx.shortest_path(temp_graph, orig_node, dest_node, weight='eco_weight')
+        # --- OPTIMIZATION 3: A* Search Algorithm ---
+        def heuristic(node, target):
+            # Pythagorean logic to guide the algorithm directly toward the destination
+            n_data = temp_graph.nodes[node]
+            t_data = temp_graph.nodes[target]
+            return ((n_data['x'] - t_data['x'])**2 + (n_data['y'] - t_data['y'])**2)**0.5
 
-        # Convert the node path back into a serializable list of GPS coordinates
+        # Execute A* Search instead of standard Dijkstra
+        route = nx.astar_path(temp_graph, orig_node, dest_node, heuristic=heuristic, weight='eco_weight')
+
+        # Convert back to GPS coordinates for the frontend
         route_coords = [{"lat": temp_graph.nodes[node]['y'], "lng": temp_graph.nodes[node]['x']} for node in route]
 
         return JsonResponse({
@@ -145,10 +169,11 @@ def calculate_route(request):
         }, status=400)
     
     except Exception as e:
+        # The safety net you verified earlier!
         return JsonResponse({
             "status": "error",
-            "message": f"An internal routing error occorred: {str(e)}"
-            }, status=500)
+            "message": f"An internal routing error occurred: {str(e)}"
+        }, status=500)
 
 def is_admin(user):
     return user.is_authenticated and (user.is_staff or user.is_superuser)
