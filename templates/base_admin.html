@@ -13,6 +13,7 @@
             <li><a href="{% url 'admin_users' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_users' %}active{% endif %}"><i class="fa-solid fa-users"></i><span>Users</span></a></li>
             <li><a href="{% url 'admin_nodes' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_nodes' %}active{% endif %}"><i class="fa-solid fa-map-location-dot"></i><span>Map Nodes</span></a></li>
             <li><a href="{% url 'admin_settings' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_settings' %}active{% endif %}"><i class="fa-solid fa-gear"></i><span>Settings</span></a></li>
+            <li><a href="{% url 'admin_docs' %}" class="sidebar-link {% if request.resolver_match.url_name == 'admin_docs' %}active{% endif %}"><i class="fa-solid fa-book"></i><span>System Docs</span></a></li>
             <li><a href="{% url 'admin_chat_inbox' %}" class="sidebar-link {% if 'admin_chat' in request.resolver_match.url_name %}active{% endif %}" style="display: flex; align-items: center;">
                 <i class="fa-solid fa-message"></i><span>Support Inbox</span>
                 {% if unread_messages_count > 0 %}

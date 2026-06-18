@@ -1,0 +1,119 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}System Documentation - GreenRoute Engine{% endblock %}
+{% block admin_title %}System Documentation{% endblock %}
+
+{% block admin_content %}
+<style>
+    /* Print-specific styling for the PDF generation */
+    @media print {
+        body { background: white; color: black; }
+        .sidebar, .navbar, .header, #btn-print, #theme-toggle { display: none !important; }
+        .main-content { margin-left: 0 !important; padding: 0 !important; width: 100% !important; }
+        .doc-section { page-break-inside: avoid; border: 1px solid #ddd; padding: 20px; border-radius: 0; box-shadow: none; margin-bottom: 20px; }
+        h1, h2, h3 { color: #000 !important; }
+        .page-title { display: block !important; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+    }
+    
+    .doc-section {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 32px;
+        margin-bottom: 32px;
+        color: var(--text-main);
+    }
+    .doc-section h2 {
+        color: var(--primary-color);
+        margin-top: 0;
+        margin-bottom: 16px;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 12px;
+    }
+    .doc-section h3 {
+        color: var(--text-main);
+        margin-top: 24px;
+        margin-bottom: 12px;
+    }
+    .doc-section p {
+        color: var(--text-muted);
+        line-height: 1.6;
+        margin-bottom: 16px;
+    }
+    .doc-section ul {
+        color: var(--text-muted);
+        line-height: 1.6;
+        padding-left: 20px;
+        margin-bottom: 16px;
+    }
+    .code-block {
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 16px;
+        border-radius: 8px;
+        font-family: monospace;
+        margin-bottom: 16px;
+        overflow-x: auto;
+    }
+</style>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+    <h1 class="page-title" style="display: none; font-size: 32px; margin: 0;">GreenRoute Technical Architecture</h1>
+    <div></div>
+    <button id="btn-print" onclick="window.print()" style="background: var(--primary-color); color: #0B0F19; font-weight: 600; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+        <i class="fa-solid fa-file-pdf"></i> Save as PDF
+    </button>
+</div>
+
+<div class="doc-section">
+    <h2>1. System Architecture Overview</h2>
+    <p>The GreenRoute Engine is a high-performance routing application built to optimize vehicle travel for minimum fuel consumption and lowest CO2 emissions. It operates using an In-Memory graph of the Nairobi road network, fetched dynamically via the OSMnx library.</p>
+    <ul>
+        <li><strong>Frontend:</strong> Django Templates, Vanilla JavaScript, Leaflet Maps, and FontAwesome.</li>
+        <li><strong>Backend:</strong> Python, Django framework, and SQLite database.</li>
+        <li><strong>Routing Engine:</strong> OSMnx (OpenStreetMap) and NetworkX for graph traversal.</li>
+    </ul>
+</div>
+
+<div class="doc-section">
+    <h2>2. Routing Logic (A* Search)</h2>
+    <p>By default, standard routing APIs optimize for absolute shortest distance or fastest time. GreenRoute utilizes a custom <code>eco_weight</code> metric applied to every road segment (edge) in the graph.</p>
+    
+    <h3>Subgraphing Optimization</h3>
+    <p>To ensure queries resolve in milliseconds rather than seconds, the engine creates a dynamic <strong>Bounding Box Subgraph</strong> around the start and end coordinates. This temporary subgraph reduces the search space significantly.</p>
+    
+    <h3>The A* Algorithm</h3>
+    <p>The backend executes an A* (A-Star) search utilizing a Pythagorean heuristic function. This directs the graph traversal specifically toward the destination coordinate, avoiding exhaustive Dijkstra searches.</p>
+</div>
+
+<div class="doc-section">
+    <h2>3. Eco-Metrics & Personalization</h2>
+    <p>The core objective of GreenRoute is estimating fuel savings. This calculation is derived mathematically from the resulting route distance.</p>
+    
+    <h3>Calculation Formulas</h3>
+    <div class="code-block">
+        standard_fuel = (distance_km / 100) * fuel_economy_l_per_100km
+        eco_fuel = standard_fuel * (1 - eco_efficiency_gain)
+        fuel_saved = standard_fuel - eco_fuel
+        co2_saved = fuel_saved * 2.31 kg
+    </div>
+    
+    <p>Administrators can configure the global averages (e.g., Base Fuel Consumption) in the <strong>System Settings</strong> panel. Furthermore, individual users can override these metrics via the <strong>Personalized Vehicle Settings</strong> tab on the client dashboard.</p>
+</div>
+
+<div class="doc-section">
+    <h2>4. Live Road Modifiers & Editor</h2>
+    <p>The interactive <strong>Map Nodes</strong> dashboard allows administrators to actively influence real-time routing decisions by placing geographic penalties.</p>
+    <ul>
+        <li><strong>Road Closures:</strong> Drops a 50m radius penalty. Any road segments within this radius are marked as restricted.</li>
+        <li><strong>High Traffic Zones:</strong> Drops a 200m radius penalty. Any road segments within this radius have their <code>eco_weight</code> heavily multiplied.</li>
+    </ul>
+    <p>These modifiers are saved to the SQLite database and queried instantly during the subgraph generation phase.</p>
+</div>
+
+<div class="doc-section">
+    <h2>5. Extensibility</h2>
+    <p>The platform is designed to scale. The current Nairobi configuration can be swapped for any global city simply by updating the <code>MainConfig.nairobi_graph</code> initialization in <code>apps.py</code>.</p>
+</div>
+
+{% endblock %}

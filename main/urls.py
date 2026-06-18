@@ -12,6 +12,7 @@ urlpatterns = [
     path('client/history/export/', views.export_history_csv, name='export_history_csv'),
     path('client/chat/', views.client_chat, name='client_chat'),
     path('admin-panel/', views.admin_panel, name='admin_panel'),
+    path('admin-panel/docs/', views.admin_docs, name='admin_docs'),
     path('admin-panel/login/', views.admin_login_view, name='admin_login'),
     path('admin-panel/logout/', views.admin_logout_view, name='admin_logout'),
     path('admin-panel/register/', views.admin_register_user, name='admin_register_user'),

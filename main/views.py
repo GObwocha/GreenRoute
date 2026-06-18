@@ -615,6 +615,11 @@ def client_chat(request):
 
 @login_required(login_url='admin_login')
 @user_passes_test(is_admin, login_url='admin_login')
+def admin_docs(request):
+    return render(request, 'admin_docs.html')
+
+@login_required(login_url='admin_login')
+@user_passes_test(is_admin, login_url='admin_login')
 def admin_chat(request, user_id=None):
     from .models import DirectMessage
     clients = User.objects.filter(is_superuser=False).annotate(
