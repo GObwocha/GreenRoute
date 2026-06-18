@@ -476,9 +476,10 @@ body {
     left: 20px;
     width: 360px;
     background: rgba(19, 26, 42, 0.85);
-    backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 255, 255, 0.1);
+    
     border-radius: 16px;
     padding: 24px;
     z-index: 1000; /* Over the Leaflet map controls */
