@@ -49,6 +49,8 @@ def calculate_distance_from_path(path_coords):
         lat2, lng2 = path_coords[i+1]['lat'], path_coords[i+1]['lng']
         total_distance += haversine_distance(lat1, lng1, lat2, lng2)
     
+    return total_distance
+
 import os
 # Your actual API Key goes here! (Note: Only used if testing TomTom's LIVE traffic. See below)
 TOMTOM_API_KEY = os.getenv('TOMTOM_API_KEY', '')
