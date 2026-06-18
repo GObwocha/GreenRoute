@@ -9,3 +9,7 @@ db.sqlite3
 .vscode/
 *.log
 .env
+# Environment Variables
+.env
+.env.*
+!.env.example
