@@ -1,0 +1,104 @@
+<div class="client-wrapper" style="height: 100%; position: relative;">
+    <!-- Interactive Map Container -->
+    <div id="eco-map" class="map-container" style="position: absolute; top:0; left:0; right:0; bottom:0;"></div>
+
+    <!-- Floating UI Panel -->
+    <div class="floating-panel">
+        <header class="panel-header" style="justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="logo-icon-small">
+                    <i class="fa-solid fa-leaf"></i>
+                </div>
+                <h2>Eco-Planner</h2>
+            </div>
+            {% if not request.user.is_authenticated or request.user.is_staff %}
+            <button id="theme-toggle" title="Toggle Theme" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; transition: color 0.2s;"><i class="fa-solid fa-moon"></i></button>
+            {% endif %}
+        </header>
+
+        <form id="route-form" class="route-form">
+            <div class="form-group-modern">
+                <label>Origin Location</label>
+                <div class="input-modern">
+                    <i class="fa-solid fa-location-dot" style="color: #94A3B8;"></i>
+                    <input type="text" id="start-location-input" placeholder="e.g., Thika, Westlands" required autocomplete="off">
+                    <button type="button" id="locate-me-btn" title="Use Current Location" style="background: none; border: none; cursor: pointer; color: var(--primary-color); padding: 0 8px;">
+                        <i class="fa-solid fa-crosshairs"></i>
+                    </button>
+                    <div id="start-suggestions" class="location-suggestions"></div>
+                </div>
+                <input type="hidden" id="start-lat">
+                <input type="hidden" id="start-lng">
+            </div>
+
+            <div class="form-group-modern">
+                <label>Destination Location</label>
+                <div class="input-modern">
+                    <i class="fa-solid fa-flag-checkered" style="color: var(--primary-color);"></i>
+                    <input type="text" id="end-location-input" placeholder="e.g., CBD, Karen" required autocomplete="off">
+                    <div id="end-suggestions" class="location-suggestions"></div>
+                </div>
+                <input type="hidden" id="end-lat">
+                <input type="hidden" id="end-lng">
+            </div>
+
+            <div class="form-group-modern" style="margin-top: 16px; margin-bottom: 16px;">
+                <button type="button" id="toggle-vehicle-settings" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 8px; padding: 0;">
+                    <i class="fa-solid fa-car"></i> Personalized Vehicle Settings (Optional) <i class="fa-solid fa-chevron-down" id="vehicle-settings-icon" style="transition: transform 0.2s;"></i>
+                </button>
+                <div id="vehicle-settings-panel" style="display: none; margin-top: 12px; padding: 12px; background: var(--bg-surface-hover); border-radius: 8px; border: 1px solid var(--border-color);">
+                    <label style="font-size: 12px; margin-bottom: 6px; color: var(--text-muted);">Fuel Economy (L/100km)</label>
+                    <div class="input-modern" style="margin-bottom: 12px; padding: 8px 12px;">
+                        <i class="fa-solid fa-gas-pump" style="color: #94A3B8; font-size: 12px;"></i>
+                        <input type="number" id="custom-fuel-economy" step="0.1" placeholder="e.g., 8.5" style="font-size: 13px; background: transparent;">
+                    </div>
+                    
+                    <label style="font-size: 12px; margin-bottom: 6px; color: var(--text-muted);">Fuel Price (per Liter)</label>
+                    <div class="input-modern" style="padding: 8px 12px;">
+                        <i class="fa-solid fa-money-bill" style="color: #94A3B8; font-size: 12px;"></i>
+                        <input type="number" id="custom-fuel-price" step="0.01" placeholder="e.g., 200.00" style="font-size: 13px; background: transparent;">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-calculate" id="btn-calc">
+                <i class="fa-solid fa-route"></i> Calculate Green Route
+            </button>
+        </form>
+
+        <div id="eco-metrics" class="eco-metrics-card hidden">
+            <h3>Route Analysis</h3>
+            <div class="metric-row">
+                <div class="metric">
+                    <span class="metric-label">Distance</span>
+                    <strong id="metric-distance" class="metric-value">-- km</strong>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Fuel Saved</span>
+                    <strong id="metric-fuel" class="metric-value">-- L</strong>
+                </div>
+            </div>
+            <div class="metric-row">
+                <div class="metric">
+                    <span class="metric-label">CO₂ Prevented</span>
+                    <strong id="metric-co2" class="metric-value">-- kg</strong>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Status</span>
+                    <strong id="metric-status" class="metric-value success">Optimized</strong>
+                </div>
+            </div>
+            <div class="eco-impact">
+                <i class="fa-solid fa-seedling"></i>
+                <span>Estimated Eco-Savings active!</span>
+            </div>
+        </div>
+
+        {% if not request.user.is_authenticated %}
+        <div class="panel-footer" style="display: flex; justify-content: space-between; align-items: center; padding-top: 16px; margin-top: 4px;">
+            <a href="{% url 'client_login' %}" target="_blank"><i class="fa-solid fa-right-to-bracket"></i> Client Login</a>
+            <a href="{% url 'admin_login' %}" target="_blank"><i class="fa-solid fa-user-shield"></i> Admin Portal</a>
+        </div>
+        {% endif %}
+    </div>
+</div>

@@ -4,30 +4,240 @@
 {% block admin_title %}Map Nodes Overview{% endblock %}
 
 {% block admin_content %}
-<div class="stats-grid" style="margin-bottom: 32px;">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<div class="stats-grid" style="margin-bottom: 24px; grid-template-columns: repeat(4, 1fr);">
     <div class="stat-card">
-        <div class="stat-card-title">Total Graph Nodes</div>
+        <div class="stat-card-title">Total Nodes</div>
         <div class="stat-card-value">{{ nodes }}</div>
         <i class="fa-solid fa-circle-nodes stat-icon"></i>
     </div>
     <div class="stat-card">
-        <div class="stat-card-title">Total Edges (Road Segments)</div>
+        <div class="stat-card-title">Total Edges</div>
         <div class="stat-card-value">{{ edges }}</div>
         <i class="fa-solid fa-road stat-icon"></i>
     </div>
+    <div class="stat-card">
+        <div class="stat-card-title">Graph Type</div>
+        <div class="stat-card-value" style="font-size: 20px;">{{ graph_type }}</div>
+        <i class="fa-solid fa-code-branch stat-icon"></i>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-title">System Status</div>
+        <div class="stat-card-value" style="font-size: 20px; color: var(--primary-color);">Online <i class="fa-solid fa-bolt"></i></div>
+        <i class="fa-solid fa-server stat-icon"></i>
+    </div>
 </div>
 
-<section class="table-section" style="padding: 24px;">
-    <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 16px; margin-bottom: 24px;">
-        <h2 class="table-title" style="color: var(--primary-color);">Map Graph Data</h2>
-        <p style="font-size: 13px; color: var(--text-muted); margin-top: 8px;">
-            The routing engine uses a graph representation of Nairobi's road network. 
-            The graph is loaded into memory on server boot to provide low-latency routing calculations.
-        </p>
-    </div>
-    <div style="color: var(--text-main); font-size: 14px;">
-        <p><i class="fa-solid fa-check-circle" style="color: var(--primary-color);"></i> Graph loaded successfully from memory.</p>
-        <p style="margin-top: 10px;">For performance reasons, raw node data is not displayed here. Use the TomTom API integration to fetch live traffic anomalies across these segments.</p>
-    </div>
-</section>
+<div class="stats-grid" style="grid-template-columns: 1fr; margin-bottom: 32px;">
+    <section class="table-section" style="padding: 24px;">
+        <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 16px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h2 class="table-title" style="color: var(--primary-color);">Interactive Network Editor</h2>
+                <p style="font-size: 13px; color: var(--text-muted); margin-top: 8px;">
+                    Click on the map to drop a Live Road Closure or Traffic marker. These dynamically affect all real-time routing queries!
+                </p>
+                <div style="margin-top: 12px; display: flex; gap: 12px;">
+                    <button id="btn-add-closure" style="background: #EF4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 600;"><i class="fa-solid fa-ban"></i> Add Road Closure</button>
+                    <button id="btn-add-traffic" style="background: #F59E0B; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 600;"><i class="fa-solid fa-car-side"></i> Add High Traffic</button>
+                    <span id="editor-status" style="font-size: 12px; color: var(--text-muted); align-self: center;">Select a mode above...</span>
+                </div>
+            </div>
+            <div style="background: rgba(16, 185, 129, 0.1); color: var(--primary-color); padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; text-align: right;">
+                <i class="fa-solid fa-satellite-dish"></i> Live Updates Active
+            </div>
+        </div>
+
+        {% if bbox %}
+        <div id="coverage-map" style="height: 450px; width: 100%; border-radius: 12px; z-index: 1; border: 1px solid var(--border-color);"></div>
+        <div style="margin-top: 16px; font-size: 13px; color: var(--text-muted); display: flex; gap: 24px; flex-wrap: wrap;">
+            <span><strong style="color: var(--text-main);">North Lat:</strong> {{ bbox.max_lat|floatformat:5 }}</span>
+            <span><strong style="color: var(--text-main);">South Lat:</strong> {{ bbox.min_lat|floatformat:5 }}</span>
+            <span><strong style="color: var(--text-main);">East Lng:</strong> {{ bbox.max_lng|floatformat:5 }}</span>
+            <span><strong style="color: var(--text-main);">West Lng:</strong> {{ bbox.min_lng|floatformat:5 }}</span>
+        </div>
+        {% else %}
+        <div style="padding: 40px; text-align: center; color: var(--error-color);">
+            <i class="fa-solid fa-triangle-exclamation" style="font-size: 32px; margin-bottom: 12px;"></i>
+            <p>Graph not loaded or bounding box calculation failed.</p>
+        </div>
+        {% endif %}
+    </section>
+</div>
+
+{% if bbox %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var minLat = {{ bbox.min_lat }};
+    var maxLat = {{ bbox.max_lat }};
+    var minLng = {{ bbox.min_lng }};
+    var maxLng = {{ bbox.max_lng }};
+    
+    // Calculate center
+    var centerLat = (minLat + maxLat) / 2;
+    var centerLng = (minLng + maxLng) / 2;
+    
+    var map = L.map('coverage-map').setView([centerLat, centerLng], 11);
+    
+    // Determine map theme based on body class
+    var isLight = document.body.classList.contains('theme-light') || localStorage.getItem('greenroute-theme') === 'light';
+    var tileUrl = isLight 
+        ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+        : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+        
+    var tiles = L.tileLayer(tileUrl, {
+        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+        subdomains: 'abcd',
+        maxZoom: 20
+    }).addTo(map);
+    
+    // Define bounds
+    var bounds = [[minLat, minLng], [maxLat, maxLng]];
+    
+    // Draw bounding box
+    L.rectangle(bounds, {
+        color: "#10B981", 
+        weight: 2, 
+        fillColor: "#10B981", 
+        fillOpacity: 0.1,
+        dashArray: "5, 10"
+    }).addTo(map);
+    
+    // Fit map to bounds with padding
+    map.fitBounds(bounds, {padding: [50, 50]});
+    
+    // Interactive Editor Logic
+    var currentMode = null; // 'closure' or 'traffic'
+    var statusSpan = document.getElementById('editor-status');
+    var btnClosure = document.getElementById('btn-add-closure');
+    var btnTraffic = document.getElementById('btn-add-traffic');
+    
+    function setMode(mode, btn, text) {
+        currentMode = mode;
+        statusSpan.innerText = text;
+        btnClosure.style.opacity = mode === 'closure' ? '1' : '0.5';
+        btnTraffic.style.opacity = mode === 'traffic' ? '1' : '0.5';
+    }
+    
+    if(btnClosure && btnTraffic) {
+        btnClosure.onclick = () => setMode('closure', btnClosure, 'Click on the map to place a ROAD CLOSURE...');
+        btnTraffic.onclick = () => setMode('traffic', btnTraffic, 'Click on the map to place a TRAFFIC ZONE...');
+    }
+
+    // Function to draw a modifier on map
+    function drawModifier(mod) {
+        var color = mod.modifier_type === 'closure' ? '#EF4444' : '#F59E0B';
+        var iconUrl = mod.modifier_type === 'closure' ? 
+            'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png' :
+            'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png';
+            
+        var marker = L.marker([mod.lat, mod.lng], {
+            icon: L.icon({
+                iconUrl: iconUrl,
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            })
+        }).addTo(map);
+        
+        var circle = L.circle([mod.lat, mod.lng], {
+            color: color,
+            fillColor: color,
+            fillOpacity: 0.2,
+            radius: mod.radius_meters
+        }).addTo(map);
+        
+        var popupContent = document.createElement('div');
+        popupContent.innerHTML = `<strong>${mod.modifier_type.toUpperCase()}</strong><br><button class="btn-delete-mod" style="margin-top:8px; background:#EF4444; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">Remove</button>`;
+        
+        popupContent.querySelector('.btn-delete-mod').onclick = function() {
+            fetch('/api/admin/modifiers/', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({id: mod.id})
+            }).then(r => r.json()).then(data => {
+                if(data.status === 'success') {
+                    map.removeLayer(marker);
+                    map.removeLayer(circle);
+                }
+            });
+        };
+        
+        marker.bindPopup(popupContent);
+    }
+    
+    // Load existing modifiers
+    fetch('/api/admin/modifiers/')
+        .then(r => r.json())
+        .then(data => {
+            if(data.status === 'success' && data.modifiers) {
+                data.modifiers.forEach(drawModifier);
+            }
+        });
+
+    // Map click handler
+    map.on('click', function(e) {
+        if(!currentMode) return;
+        
+        var lat = e.latlng.lat;
+        var lng = e.latlng.lng;
+        var radius = currentMode === 'closure' ? 50 : 200; // Traffic affects larger area
+        
+        fetch('/api/admin/modifiers/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                modifier_type: currentMode,
+                lat: lat,
+                lng: lng,
+                radius_meters: radius,
+                description: `Manual ${currentMode}`
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if(data.status === 'success') {
+                drawModifier({
+                    id: data.id,
+                    modifier_type: currentMode,
+                    lat: lat,
+                    lng: lng,
+                    radius_meters: radius
+                });
+                // Reset mode
+                currentMode = null;
+                statusSpan.innerText = 'Select a mode above...';
+                btnClosure.style.opacity = '1';
+                btnTraffic.style.opacity = '1';
+            } else {
+                alert('Error saving modifier: ' + data.message);
+            }
+        });
+    });
+    
+    // Listen for theme toggle to dynamically update map tiles!
+    const themeBtn = document.getElementById('theme-toggle');
+    if (themeBtn) {
+        themeBtn.addEventListener('click', function() {
+            setTimeout(function() {
+                var newIsLight = document.body.classList.contains('theme-light');
+                var newUrl = newIsLight 
+                    ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+                    : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+                tiles.setUrl(newUrl);
+            }, 50);
+        });
+    }
+});
+</script>
+{% endif %}
 {% endblock %}

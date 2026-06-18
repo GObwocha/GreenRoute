@@ -44,6 +44,29 @@ console.log('GreenRoute script initialized. searchLocation:', typeof window.sear
 document.addEventListener('DOMContentLoaded', () => {
     // Initialization logic
     console.log("GreenRoute Client-side scripts loaded successfully.");
+    
+    // Theme logic
+    const themeToggle = document.getElementById('theme-toggle');
+    const currentTheme = localStorage.getItem('greenroute-theme') || 'dark';
+    
+    if (currentTheme === 'light') {
+        document.body.classList.add('theme-light');
+        if (themeToggle) themeToggle.innerHTML = '<i class="fa-solid fa-sun"></i>';
+    }
+
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('theme-light');
+            let theme = 'dark';
+            if (document.body.classList.contains('theme-light')) {
+                theme = 'light';
+                themeToggle.innerHTML = '<i class="fa-solid fa-sun"></i>';
+            } else {
+                themeToggle.innerHTML = '<i class="fa-solid fa-moon"></i>';
+            }
+            localStorage.setItem('greenroute-theme', theme);
+        });
+    }
 });
 
 
@@ -244,8 +267,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Handle Route Form Submission
-    const routeForm = document.getElementById('route-form');
+        const routeForm = document.getElementById('route-form');
+    
+    // Toggle Vehicle Settings Panel
+    const toggleVehicleSettings = document.getElementById('toggle-vehicle-settings');
+    const vehicleSettingsPanel = document.getElementById('vehicle-settings-panel');
+    const vehicleSettingsIcon = document.getElementById('vehicle-settings-icon');
+    
+    if (toggleVehicleSettings && vehicleSettingsPanel) {
+        toggleVehicleSettings.addEventListener('click', () => {
+            if (vehicleSettingsPanel.style.display === 'none') {
+                vehicleSettingsPanel.style.display = 'block';
+                vehicleSettingsIcon.style.transform = 'rotate(180deg)';
+            } else {
+                vehicleSettingsPanel.style.display = 'none';
+                vehicleSettingsIcon.style.transform = 'rotate(0deg)';
+            }
+        });
+    }
+
     routeForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -264,9 +304,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const endLng = selectedEnd.lng;
         const endLat = selectedEnd.lat;
 
+        // Custom Vehicle Settings
+        const customFuelEconomy = document.getElementById('custom-fuel-economy')?.value;
+        const customFuelPrice = document.getElementById('custom-fuel-price')?.value;
+        
+        let apiUrl = `/api/route/?start_lat=${startLat}&start_lng=${startLng}&end_lat=${endLat}&end_lng=${endLng}&start_location=${encodeURIComponent(selectedStart.name)}&end_location=${encodeURIComponent(selectedEnd.name)}`;
+        
+        if (customFuelEconomy) {
+            apiUrl += `&custom_fuel_economy=${encodeURIComponent(customFuelEconomy)}`;
+        }
+        if (customFuelPrice) {
+            apiUrl += `&custom_fuel_price=${encodeURIComponent(customFuelPrice)}`;
+        }
+
         try {
             // Hit the Django API
-            const response = await fetch(`/api/route/?start_lat=${startLat}&start_lng=${startLng}&end_lat=${endLat}&end_lng=${endLng}&start_location=${encodeURIComponent(selectedStart.name)}&end_location=${encodeURIComponent(selectedEnd.name)}`);
+            const response = await fetch(apiUrl);
             const data = await response.json();
 
             if (data.status === 'success') {
@@ -311,8 +364,8 @@ document.addEventListener('DOMContentLoaded', () => {
                             <strong class="metric-value">${data.co2_prevented_kg} kg</strong>
                         </div>
                         <div class="metric">
-                            <span class="metric-label">Status</span>
-                            <strong class="metric-value success">Optimized</strong>
+                            <span class="metric-label">${data.fuel_cost_saved !== undefined ? 'Money Saved' : 'Status'}</span>
+                            <strong class="metric-value ${data.fuel_cost_saved !== undefined ? 'success' : 'success'}">${data.fuel_cost_saved !== undefined ? 'Ksh ' + data.fuel_cost_saved : 'Optimized'}</strong>
                         </div>
                     </div>
                 `;

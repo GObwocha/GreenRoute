@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    {% if request.user.is_authenticated and not request.user.is_staff %}
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo-icon"><i class="fa-solid fa-leaf"></i></div>
+            <div class="sidebar-title">GreenRoute</div>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{% url 'client_dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'client_dashboard' %}active{% endif %}"><i class="fa-solid fa-map-location-dot"></i><span>Eco-Planner</span></a></li>
+            <li><a href="{% url 'client_history' %}" class="sidebar-link {% if request.resolver_match.url_name == 'client_history' %}active{% endif %}"><i class="fa-solid fa-clock-rotate-left"></i><span>My History</span></a></li>
+            <li><a href="{% url 'client_chat' %}" class="sidebar-link {% if request.resolver_match.url_name == 'client_chat' %}active{% endif %}" style="display: flex; align-items: center;">
+                <i class="fa-solid fa-message"></i><span>Support Inbox</span>
+                {% if unread_messages_count > 0 %}
+                    <span style="background: var(--error-color); color: white; border-radius: 10px; padding: 2px 6px; font-size: 11px; margin-left: auto; font-weight: 600;">{{ unread_messages_count }}</span>
+                {% endif %}
+            </a></li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-wrapper" style="position: relative;">
+        <!-- Top Navbar -->
+        <header class="top-navbar" style="position: absolute; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(11, 15, 25, 0.8); backdrop-filter: blur(10px);">
+            <h1 class="page-title">{% block client_title %}Client Portal{% endblock %}</h1>
+            <div class="user-profile">
+                <button id="theme-toggle" title="Toggle Theme" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px; margin-right: 12px; transition: color 0.2s;"><i class="fa-solid fa-moon"></i></button>
+                <span style="font-size: 14px; color: var(--text-muted);">Welcome, <strong style="color: var(--text-main);">{{ request.user.username }}</strong></span>
+                <div class="avatar" style="background: var(--primary-color);">{{ request.user.username|first|upper|default:"C" }}</div>
+                <a href="{% url 'client_logout' %}" style="color: var(--error-color); text-decoration: none; margin-left: 16px; font-size: 14px; font-weight: 600;"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+            </div>
+        </header>
+
+        <!-- Main Body Grid -->
+        <main class="content-container" style="height: 100vh; padding: 0; padding-top: 70px; overflow: hidden; position: relative;">
+            {% if messages %}
+            <div style="position: absolute; top: 80px; right: 24px; z-index: 9999;">
+                {% for message in messages %}
+                <div class="msg-item {% if message.tags == 'success' %}msg-success{% else %}msg-error{% endif %}" style="box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% block client_content %}
+            {% endblock %}
+        </main>
+    </div>
+    {% else %}
+        <!-- For Anonymous Users -->
+        {% block client_content_anonymous %}
+        {% endblock %}
+    {% endif %}
+{% endblock %}

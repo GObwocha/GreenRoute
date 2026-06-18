@@ -1,13 +1,14 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.contrib import messages
+from django.db.models import Q, Count
 import secrets
 #Libraries for the routing engine
 from django.http import JsonResponse
 from .apps import MainConfig
-from .models import RouteHistory
+from .models import RouteHistory, SystemSettings
 import networkx as nx
 import osmnx as ox
 import requests
@@ -164,6 +165,10 @@ def calculate_route(request):
     start_lng_raw = request.GET.get('start_lng')
     end_lat_raw = request.GET.get('end_lat')
     end_lng_raw = request.GET.get('end_lng')
+    
+    # Optional Custom Vehicle Parameters
+    custom_fuel_economy = request.GET.get('custom_fuel_economy')
+    custom_fuel_price = request.GET.get('custom_fuel_price')
 
     #ERROR CHECK 1:Did frontend forget a parameter?
     if not all([start_lat_raw, start_lng_raw, end_lat_raw, end_lng_raw]):
@@ -251,15 +256,37 @@ def calculate_route(request):
                 # nearest_nodes returns a numpy array or list when given lists
                 import numpy as np
                 if isinstance(nearest, (list, np.ndarray)):
-                    jam_nodes.update(nearest)
-                else:
-                    jam_nodes.add(nearest)
+                    nearest = ox.distance.nearest_nodes(temp_graph, lngs, lats)
+                jam_nodes.update(nearest)
             except Exception as e:
-                debug_log(f"Error mapping jam nodes: {e}")
-
-        TRAFFIC_MULTIPLIER = 10
-        SURFACE_MULTIPLIER = 5
-        RESTRICTED_MULTIPLIER = 100
+                debug_log(f"TomTom KDTree mapping failed: {e}")
+                
+        # Query active RoadModifiers
+        from .models import RoadModifier
+        active_modifiers = RoadModifier.objects.filter(is_active=True)
+        closure_nodes = set()
+        traffic_nodes = set()
+        
+        for mod in active_modifiers:
+            # Simple approximation: 1 degree latitude is ~111km. 
+            # 50m radius is approx 0.00045 degrees.
+            deg_radius = mod.radius_meters / 111000.0
+            
+            # Find nodes within this radius
+            for n, data in temp_graph.nodes(data=True):
+                if abs(data['y'] - mod.lat) < deg_radius and abs(data['x'] - mod.lng) < deg_radius:
+                    if mod.modifier_type == 'closure':
+                        closure_nodes.add(n)
+                    else:
+                        traffic_nodes.add(n)
+                        
+        debug_log(f"[API] Modifiers applied: {len(closure_nodes)} closed, {len(traffic_nodes)} traffic")
+        
+        # Now iterate through all edges and calculate the 'eco_weight'
+        settings = SystemSettings.load()
+        TRAFFIC_MULTIPLIER = settings.traffic_multiplier
+        SURFACE_MULTIPLIER = settings.surface_multiplier
+        RESTRICTED_MULTIPLIER = settings.restricted_multiplier
 
         # This loop now only processes a few hundred local streets instead of 50,000+!
         for u, v, key, data in temp_graph.edges(keys=True, data=True):
@@ -274,13 +301,17 @@ def calculate_route(request):
                 current_weight = current_weight * TRAFFIC_MULTIPLIER
 
             surface_attr = data.get('surface', 'paved')
+            if v in jam_nodes or u in jam_nodes or u in traffic_nodes or v in traffic_nodes:
+                current_weight = current_weight * TRAFFIC_MULTIPLIER
+
             surface = surface_attr[0] if isinstance(surface_attr, list) else surface_attr
             if surface in ['unpaved', 'dirt', 'mud', 'gravel', 'ground']:
                 current_weight = current_weight * SURFACE_MULTIPLIER
 
             access_attr = data.get('access', 'yes')
             access = access_attr[0] if isinstance(access_attr, list) else access_attr
-            if access in ['private', 'no', 'delivery']:
+            
+            if access in ['private', 'no', 'delivery'] or u in closure_nodes or v in closure_nodes:
                 current_weight = current_weight * RESTRICTED_MULTIPLIER
                 
             data['eco_weight'] = current_weight
@@ -310,11 +341,25 @@ def calculate_route(request):
         print(f"[API] Distance calculated in {time.time()-t5:.2f}s")
         
         # Estimate eco metrics
-        # Assuming standard fuel consumption: ~8 L/100km
-        # Green route is ~20% more efficient due to less congestion/uphill
-        standard_fuel = distance_km / 100 * 8  # liters
-        eco_fuel = standard_fuel * 0.8  # 20% more efficient
+        # Using dynamically configured fuel settings, overriding with user's custom economy if provided
+        vehicle_fuel_consumption = settings.base_fuel_consumption
+        if custom_fuel_economy:
+            try:
+                vehicle_fuel_consumption = float(custom_fuel_economy)
+            except ValueError:
+                pass
+                
+        standard_fuel = distance_km / 100 * vehicle_fuel_consumption  # liters
+        eco_fuel = standard_fuel * (1 - (settings.eco_efficiency_gain / 100))
         fuel_saved = standard_fuel - eco_fuel
+        
+        # Calculate cost saved if fuel price provided
+        fuel_cost_saved = None
+        if custom_fuel_price:
+            try:
+                fuel_cost_saved = fuel_saved * float(custom_fuel_price)
+            except ValueError:
+                pass
         
         # CO2 emissions: ~2.31 kg CO2 per liter of fuel (average for petrol vehicles)
         co2_saved = fuel_saved * 2.31
@@ -325,23 +370,24 @@ def calculate_route(request):
         
         # Save route history for analytics
         try:
-            RouteHistory.objects.create(
-                start_location_name=start_location,
-                start_lat=start_lat,
-                start_lng=start_lng,
-                end_location_name=end_location,
-                end_lat=end_lat,
-                end_lng=end_lng,
-                distance_km=distance_km,
-                nodes_traversed=nodes_count,
-                fuel_saved_liters=fuel_saved,
-                co2_prevented_kg=co2_saved,
-                traffic_applied=bool(jam_coords)
-            )
+          history_entry = RouteHistory.objects.create(
+            user=request.user if request.user.is_authenticated else None,
+            start_location_name=start_location,
+            start_lat=start_lat,
+            start_lng=start_lng,
+            end_location_name=end_location,
+            end_lat=end_lat,
+            end_lng=end_lng,
+            distance_km=distance_km,
+            nodes_traversed=nodes_count,
+            fuel_saved_liters=fuel_saved,
+            co2_prevented_kg=co2_saved,
+            traffic_applied=bool(jam_coords)
+        )
         except Exception as e:
             print(f"Failed to save route history: {e}")
 
-        return JsonResponse({
+        response_data = {
             "status": "success",
             "traffic_data_applied": bool(jam_coords),
             "path": route_coords,
@@ -349,7 +395,12 @@ def calculate_route(request):
             "nodes_traversed": nodes_count,
             "fuel_saved_liters": round(fuel_saved, 2),
             "co2_prevented_kg": round(co2_saved, 2)
-        })
+        }
+        
+        if fuel_cost_saved is not None:
+            response_data["fuel_cost_saved"] = round(fuel_cost_saved, 2)
+            
+        return JsonResponse(response_data)
 
     except nx.NetworkXNoPath:
         return JsonResponse({
@@ -403,21 +454,230 @@ def admin_users(request):
 
 @login_required(login_url='admin_login')
 @user_passes_test(is_admin, login_url='admin_login')
+def toggle_user_status(request, user_id):
+    if request.method == 'POST':
+        user = get_object_or_404(User, id=user_id)
+        if not user.is_superuser:
+            user.is_active = not user.is_active
+            user.save()
+            action = "unsuspended" if user.is_active else "suspended"
+            messages.success(request, f"User {user.username} has been {action}.")
+    return redirect('admin_users')
+
+@login_required(login_url='admin_login')
+@user_passes_test(is_admin, login_url='admin_login')
+def delete_user(request, user_id):
+    if request.method == 'POST':
+        user = get_object_or_404(User, id=user_id)
+        if not user.is_superuser:
+            username = user.username
+            user.delete()
+            messages.success(request, f"User {username} has been permanently deleted.")
+    return redirect('admin_users')
+
+@login_required(login_url='admin_login')
+@user_passes_test(is_admin, login_url='admin_login')
 def admin_nodes(request):
     # Some basic graph info
     graph = MainConfig.nairobi_graph
+    bbox = None
     if graph:
         nodes = len(graph.nodes)
         edges = len(graph.edges)
+        
+        # Calculate bounding box for visualization
+        lats = [data.get('y') for n, data in graph.nodes(data=True) if data.get('y') is not None]
+        lngs = [data.get('x') for n, data in graph.nodes(data=True) if data.get('x') is not None]
+        if lats and lngs:
+            bbox = {
+                'min_lat': min(lats),
+                'max_lat': max(lats),
+                'min_lng': min(lngs),
+                'max_lng': max(lngs)
+            }
     else:
         nodes = 0
         edges = 0
-    return render(request, 'admin_nodes.html', {'nodes': nodes, 'edges': edges})
+        
+    context = {
+        'nodes': nodes, 
+        'edges': edges,
+        'bbox': bbox,
+        'graph_type': type(graph).__name__ if graph else "None"
+    }
+    return render(request, 'admin_nodes.html', context)
 
 @login_required(login_url='admin_login')
 @user_passes_test(is_admin, login_url='admin_login')
 def admin_settings(request):
-    return render(request, 'admin_settings.html')
+    settings = SystemSettings.load()
+    if request.method == 'POST':
+        settings.traffic_multiplier = float(request.POST.get('traffic_multiplier', 10.0))
+        settings.surface_multiplier = float(request.POST.get('surface_multiplier', 5.0))
+        settings.restricted_multiplier = float(request.POST.get('restricted_multiplier', 100.0))
+        settings.base_fuel_consumption = float(request.POST.get('base_fuel_consumption', 8.0))
+        settings.eco_efficiency_gain = float(request.POST.get('eco_efficiency_gain', 20.0))
+        settings.save()
+        messages.success(request, "System settings updated successfully.")
+        return redirect('admin_settings')
+        
+    return render(request, 'admin_settings.html', {'settings': settings})
+
+def client_login_view(request):
+    if request.method == 'POST':
+        u = request.POST.get('username')
+        p = request.POST.get('password')
+        user = authenticate(request, username=u, password=p)
+        if user is not None:
+            login(request, user)
+            messages.success(request, f"Welcome back, {user.username}!")
+            return redirect('client_dashboard')
+        else:
+            return render(request, 'client_login.html', {"error_message": "Invalid username or password credentials."})
+    return render(request, 'client_login.html')
+
+def client_logout_view(request):
+    logout(request)
+    messages.info(request, "You have been logged out.")
+    return redirect('client_login')
+
+@login_required(login_url='client_login')
+def client_history(request):
+    routes = RouteHistory.objects.filter(user=request.user).order_by('-created_at')
+    
+    # Calculate totals
+    total_fuel_saved = sum(r.fuel_saved_liters for r in routes)
+    total_co2_prevented = sum(r.co2_prevented_kg for r in routes)
+    
+    context = {
+        'routes': routes,
+        'total_fuel_saved': round(total_fuel_saved, 2),
+        'total_co2_prevented': round(total_co2_prevented, 2),
+        'total_routes': routes.count()
+    }
+    return render(request, 'client_history.html', context)
+
+import csv
+from django.http import HttpResponse
+
+@login_required(login_url='client_login')
+def export_history_csv(request):
+    # Depending on user role, export different scope of data
+    if request.user.is_superuser or request.user.is_staff:
+        # Admins export everything
+        history = RouteHistory.objects.all().order_by('-created_at')
+        filename = "platform_eco_history.csv"
+    else:
+        # Clients export only their own
+        history = RouteHistory.objects.filter(user=request.user).order_by('-created_at')
+        filename = f"{request.user.username}_eco_history.csv"
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Date', 'Origin', 'Destination', 'Distance (km)', 'Fuel Saved (L)', 'CO2 Prevented (kg)', 'Traffic Considered'])
+
+    for entry in history:
+        writer.writerow([
+            entry.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            entry.start_location_name or 'Custom Map Pin',
+            entry.end_location_name or 'Custom Map Pin',
+            entry.distance_km,
+            entry.fuel_saved_liters,
+            entry.co2_prevented_kg,
+            'Yes' if entry.traffic_applied else 'No'
+        ])
+
+    return response
+
+@login_required(login_url='client_login')
+def client_chat(request):
+    from .models import DirectMessage
+    
+    # For simplicity, we just send messages to the first superuser
+    admin_user = User.objects.filter(is_superuser=True).first()
+    
+    if request.method == 'POST' and admin_user:
+        content = request.POST.get('content')
+        if content:
+            DirectMessage.objects.create(sender=request.user, receiver=admin_user, content=content)
+            return redirect('client_chat')
+            
+    # Mark all incoming messages as read
+    DirectMessage.objects.filter(receiver=request.user, is_read=False).update(is_read=True)
+            
+    chat_messages = DirectMessage.objects.filter(
+        Q(sender=request.user) | Q(receiver=request.user)
+    ).order_by('timestamp')
+    
+    return render(request, 'client_chat.html', {'chat_messages': chat_messages, 'admin_user': admin_user})
+
+@login_required(login_url='admin_login')
+@user_passes_test(is_admin, login_url='admin_login')
+def admin_chat(request, user_id=None):
+    from .models import DirectMessage
+    clients = User.objects.filter(is_superuser=False).annotate(
+        unread_count=Count('sent_messages', filter=Q(sent_messages__is_read=False))
+    ).order_by('-unread_count', 'username')
+    selected_client = None
+    chat_messages = []
+    
+    if user_id:
+        selected_client = get_object_or_404(User, id=user_id)
+        
+        # Mark incoming messages as read globally for this client
+        DirectMessage.objects.filter(sender=selected_client, is_read=False).update(is_read=True)
+        
+        chat_messages = DirectMessage.objects.filter(
+            Q(sender=request.user, receiver=selected_client) | 
+            Q(sender=selected_client)
+        ).order_by('timestamp')
+        
+        if request.method == 'POST':
+            content = request.POST.get('content')
+            if content:
+                DirectMessage.objects.create(sender=request.user, receiver=selected_client, content=content)
+                return redirect('admin_chat', user_id=user_id)
+                
+    return render(request, 'admin_chat.html', {
+        'clients': clients, 
+        'selected_client': selected_client, 
+        'chat_messages': chat_messages
+    })
+
+import json
+
+@login_required(login_url='admin_login')
+@user_passes_test(is_admin, login_url='admin_login')
+def admin_modifiers_api(request):
+    from .models import RoadModifier
+    if request.method == 'GET':
+        modifiers = RoadModifier.objects.filter(is_active=True).values('id', 'modifier_type', 'lat', 'lng', 'radius_meters', 'description')
+        return JsonResponse({'status': 'success', 'modifiers': list(modifiers)})
+    
+    elif request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            mod = RoadModifier.objects.create(
+                modifier_type=data.get('modifier_type'),
+                lat=float(data.get('lat')),
+                lng=float(data.get('lng')),
+                radius_meters=float(data.get('radius_meters', 50)),
+                description=data.get('description', '')
+            )
+            return JsonResponse({'status': 'success', 'id': mod.id})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+            
+    elif request.method == 'DELETE':
+        try:
+            data = json.loads(request.body)
+            mod_id = data.get('id')
+            RoadModifier.objects.filter(id=mod_id).update(is_active=False)
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
 def admin_login_view(request):
     if request.method == 'POST':

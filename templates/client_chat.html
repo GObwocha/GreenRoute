@@ -1,0 +1,48 @@
+{% extends 'base_client.html' %}
+
+{% block client_title %}Support Inbox{% endblock %}
+
+{% block client_content %}
+<div class="chat-container" style="display: flex; flex-direction: column; height: calc(100vh - 120px); background: var(--bg-surface); border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden;">
+    
+    <div class="chat-header" style="padding: 16px 24px; border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.1);">
+        <h2 style="font-size: 16px; color: var(--text-main);"><i class="fa-solid fa-headset" style="color: var(--primary-color); margin-right: 8px;"></i> Support Team</h2>
+        <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Send us feedback or ask for help.</p>
+    </div>
+
+    <div class="chat-messages" id="chat-box" style="flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px;">
+        {% for msg in chat_messages %}
+            {% if msg.sender == request.user %}
+                <div class="message outgoing" style="align-self: flex-end; background: var(--primary-color); color: white; padding: 12px 16px; border-radius: 16px 16px 0 16px; max-width: 70%;">
+                    <p style="margin-bottom: 4px; font-size: 14px;">{{ msg.content }}</p>
+                    <span style="font-size: 11px; opacity: 0.8;">{{ msg.timestamp|time:"H:i" }}</span>
+                </div>
+            {% else %}
+                <div class="message incoming" style="align-self: flex-start; background: var(--bg-surface-hover); color: var(--text-main); padding: 12px 16px; border-radius: 16px 16px 16px 0; max-width: 70%; border: 1px solid var(--border-color);">
+                    <p style="margin-bottom: 4px; font-size: 14px;">{{ msg.content }}</p>
+                    <span style="font-size: 11px; color: var(--text-muted);">Admin • {{ msg.timestamp|time:"H:i" }}</span>
+                </div>
+            {% endif %}
+        {% empty %}
+            <div style="text-align: center; color: var(--text-muted); margin-top: 40px;">
+                <i class="fa-regular fa-comments" style="font-size: 32px; margin-bottom: 12px;"></i>
+                <p>No messages yet. Send a message to start a conversation!</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="chat-input" style="padding: 16px 24px; border-top: 1px solid var(--border-color); background: rgba(0,0,0,0.1);">
+        <form method="POST" style="display: flex; gap: 12px;">
+            {% csrf_token %}
+            <input type="text" name="content" placeholder="Type your message..." required style="flex: 1; padding: 12px 16px; border-radius: 24px; border: 1px solid var(--border-color); background: var(--bg-base); color: var(--text-main); outline: none;">
+            <button type="submit" class="btn-calculate" style="width: auto; padding: 0 24px; border-radius: 24px;"><i class="fa-solid fa-paper-plane"></i></button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Auto-scroll to bottom of chat
+    const chatBox = document.getElementById('chat-box');
+    chatBox.scrollTop = chatBox.scrollHeight;
+</script>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends 'base_client.html' %}
+
+{% block client_title %}My History{% endblock %}
+
+{% block client_content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px;">
+    <h2 style="font-size: 28px; font-weight: 700; color: var(--text-main); margin: 0;"><i class="fa-solid fa-clock-rotate-left"></i> My History</h2>
+    <a href="{% url 'export_history_csv' %}" class="btn-calculate" style="width: auto; padding: 10px 20px; font-size: 14px; margin-top: 0;"><i class="fa-solid fa-download"></i> Export CSV</a>
+</div>
+
+<div class="stats-grid" style="margin-bottom: 32px;">
+    <div class="stat-card">
+        <div class="stat-card-title">Total Routes Planned</div>
+        <div class="stat-card-value">{{ total_routes }}</div>
+        <i class="fa-solid fa-route stat-icon"></i>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-title">My Fuel Saved</div>
+        <div class="stat-card-value">{{ total_fuel_saved }} L</div>
+        <i class="fa-solid fa-gas-pump stat-icon" style="color: var(--primary-color);"></i>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-title">My CO₂ Prevented</div>
+        <div class="stat-card-value" style="color: var(--primary-color);">{{ total_co2_prevented }} kg</div>
+        <i class="fa-solid fa-leaf stat-icon" style="color: var(--primary-color);"></i>
+    </div>
+</div>
+
+<section class="table-section">
+    <div class="table-header">
+        <h2 class="table-title">Recent Routes</h2>
+    </div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Origin</th>
+                <th>Destination</th>
+                <th>Distance (km)</th>
+                <th>Fuel Saved</th>
+                <th>CO₂ Prevented</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for route in routes %}
+            <tr>
+                <td>{{ route.start_location_name|default:"Coordinate" }}</td>
+                <td>{{ route.end_location_name|default:"Coordinate" }}</td>
+                <td>{{ route.distance_km|floatformat:2 }}</td>
+                <td style="color: var(--primary-color); font-weight: 600;">+{{ route.fuel_saved_liters|floatformat:2 }} L</td>
+                <td style="color: var(--primary-color); font-weight: 600;">+{{ route.co2_prevented_kg|floatformat:2 }} kg</td>
+                <td style="color: var(--text-muted);">{{ route.created_at|date:"M d, H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">No routes generated yet. Use the Eco-Planner to get started!</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

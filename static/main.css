@@ -16,6 +16,17 @@
     --sidebar-width: 260px;
 }
 
+body.theme-light {
+    --primary-color: #059669;
+    --primary-dark: #047857;
+    --bg-base: #F1F5F9;
+    --bg-surface: #FFFFFF;
+    --bg-surface-hover: #E2E8F0;
+    --text-main: #0F172A;
+    --text-muted: #475569;
+    --border-color: #CBD5E1;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -569,8 +580,9 @@ body {
     max-height: 200px;
     overflow-y: auto;
     z-index: 1001;
-    margin-top: -8px;
-    padding-top: 8px;
+    z-index: 1001;
+    margin-top: -1px;
+    padding: 0;
     display: block;
     min-width: 100%;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
@@ -588,6 +600,11 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
 }
 
 .suggestion-item:hover:not(.disabled) {
