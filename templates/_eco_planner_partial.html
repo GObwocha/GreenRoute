@@ -1,4 +1,4 @@
-<div class="client-wrapper" style="height: 100%; position: relative;">
+<div class="client-wrapper" style="height: 100vh; position: relative; width: 100%;">
     <!-- Interactive Map Container -->
     <div id="eco-map" class="map-container" style="position: absolute; top:0; left:0; right:0; bottom:0;"></div>
 
@@ -98,6 +98,10 @@
         <div class="panel-footer" style="display: flex; justify-content: space-between; align-items: center; padding-top: 16px; margin-top: 4px;">
             <a href="{% url 'client_login' %}" target="_blank"><i class="fa-solid fa-right-to-bracket"></i> Client Login</a>
             <a href="{% url 'admin_login' %}" target="_blank"><i class="fa-solid fa-user-shield"></i> Admin Portal</a>
+        </div>
+        {% elif request.user.is_staff %}
+        <div class="panel-footer" style="display: flex; justify-content: center; align-items: center; padding-top: 16px; margin-top: 4px;">
+            <a href="{% url 'admin_panel' %}" style="color: var(--primary-color); font-weight: 600;"><i class="fa-solid fa-gauge-high"></i> Back to Admin Dashboard</a>
         </div>
         {% endif %}
     </div>

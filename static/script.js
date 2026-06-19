@@ -77,14 +77,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!mapElement) return;
 
     // Initialize Leaflet map centered on Nairobi
-    const map = L.map('eco-map').setView([-1.2921, 36.8219], 13);
+    const map = L.map('eco-map', { zoomControl: false }).setView([-1.2921, 36.8219], 13);
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    // Add Dark Mode CartoDB Map Tiles for that sleek "Eco-Routing" aesthetic
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 20
+    // Add Standard OpenStreetMap Tiles as a fallback
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
     }).addTo(map);
+
+    // Force map to recalculate its size after the container is fully rendered
+    setTimeout(() => map.invalidateSize(), 250);
 
     let currentRouteLine = null;
     let startMarker = null;
@@ -328,8 +331,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     map.removeLayer(currentRouteLine);
                 }
 
-                // Extract coordinates for Leaflet (needs [lat, lng])
-                const latLngs = data.path.map(pt => [pt.lat, pt.lng]);
+                // Extract coordinates for Leaflet (needs [lat, lng]) - strongly typed to float to prevent fitBounds crashes
+                const latLngs = data.path.map(pt => [parseFloat(pt.lat), parseFloat(pt.lng)]);
                 
                 // Draw new polyline with vibrant green glow
                 currentRouteLine = L.polyline(latLngs, {
