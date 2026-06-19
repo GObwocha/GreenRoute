@@ -14,6 +14,9 @@
     --border-color: #334155;
     --error-color: #EF4444;
     --sidebar-width: 260px;
+    --panel-bg: rgba(19, 26, 42, 0.85);
+    --panel-border: rgba(255, 255, 255, 0.1);
+    --input-bg: rgba(0, 0, 0, 0.3);
 }
 
 body.theme-light {
@@ -25,6 +28,9 @@ body.theme-light {
     --text-main: #0F172A;
     --text-muted: #475569;
     --border-color: #CBD5E1;
+    --panel-bg: rgba(255, 255, 255, 0.85);
+    --panel-border: rgba(0, 0, 0, 0.1);
+    --input-bg: rgba(0, 0, 0, 0.05);
 }
 
 * {
@@ -486,10 +492,12 @@ body {
     top: 20px;
     left: 20px;
     width: 360px;
-    background: rgba(19, 26, 42, 0.85);
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    background: var(--panel-bg);
     -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--panel-border);
     
     border-radius: 16px;
     padding: 24px;
@@ -504,7 +512,7 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid var(--panel-border);
     padding-bottom: 16px;
 }
 
@@ -544,8 +552,8 @@ body {
 .input-modern {
     display: flex;
     align-items: center;
-    background: rgba(0,0,0,0.3);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: var(--input-bg);
+    border: 1px solid var(--panel-border);
     border-radius: 8px;
     padding: 0 12px;
     gap: 10px;
@@ -564,7 +572,7 @@ body {
 }
 
 .input-modern input::placeholder {
-    color: rgba(255,255,255,0.3);
+    color: var(--text-muted);
 }
 
 /* Location suggestions dropdown */
@@ -704,7 +712,7 @@ body {
 
 .panel-footer {
     text-align: center;
-    border-top: 1px solid rgba(255,255,255,0.05);
+    border-top: 1px solid var(--panel-border);
     padding-top: 16px;
     margin-top: 4px;
 }
