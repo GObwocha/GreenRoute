@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
-
+{% load static %}
 {% block content %}
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-header">
-            <div class="sidebar-logo-icon"><i class="fa-solid fa-leaf"></i></div>
+            <div class="sidebar-logo-icon"><img src="{% static 'images/favicon_transparent/favicon-16x16.png' %}" alt="Eco-Planner Logo" style="width: 30px; height: 30px; object-fit: contain;"></div>
             <div class="sidebar-title">GreenRoute</div>
         </div>
         <ul class="sidebar-menu">

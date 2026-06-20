@@ -15,6 +15,19 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <!-- Global Static Assets -->
     <link rel="stylesheet" href="{% static 'main.css' %}">
+    <!-- ==== FAVICON ICONS ==== -->
+    <!-- Standard browser tabs -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon/favicon-16x16.png' %}">
+    
+    <!-- Fallback for older browsers -->
+    <link rel="shortcut icon" href="{% static 'images/favicon/favicon.ico' %}">
+
+    <!-- Apple iOS Home Screen -->
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/favicon/apple-touch-icon.png' %}">
+    
+    <!-- Android Home Screen Manifest -->
+    <link rel="manifest" href="{% static 'images/favicon/site.webmanifest' %}">
     {% block extra_head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">

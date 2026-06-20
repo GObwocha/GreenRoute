@@ -1,3 +1,4 @@
+{% load static %}
 <div class="client-wrapper" style="height: 100vh; position: relative; width: 100%;">
     <!-- Interactive Map Container -->
     <div id="eco-map" class="map-container" style="position: absolute; top:0; left:0; right:0; bottom:0;"></div>
@@ -7,7 +8,7 @@
         <header class="panel-header" style="justify-content: space-between;">
             <div style="display: flex; align-items: center; gap: 12px;">
                 <div class="logo-icon-small">
-                    <i class="fa-solid fa-leaf"></i>
+                    <img src="{% static 'images/favicon_transparent/favicon-32x32.png' %}" alt="Eco-Planner Logo" style="width: 30px; height: 30px; object-fit: contain;">
                 </div>
                 <h2>Eco-Planner</h2>
             </div>

@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
-
+{% load static %}
 {% block content %}
     {% if request.user.is_authenticated and not request.user.is_staff %}
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-header">
-            <div class="sidebar-logo-icon"><i class="fa-solid fa-leaf"></i></div>
+            <div class="sidebar-logo-icon"><img src="{% static 'images/favicon_transparent/favicon-32x32.png' %}" alt="Eco-Planner Logo" style="width: 30px; height: 30px; object-fit: contain;"></div>
             <div class="sidebar-title">GreenRoute</div>
         </div>
         <ul class="sidebar-menu">
