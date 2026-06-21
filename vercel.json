@@ -1,6 +1,6 @@
 {
     "builds": [{
-        "src": "GreenRoute/wsgi.py",
+        "src": "Core/wsgi.py",
         "use": "@vercel/python"
     }],
     "routes": [
@@ -10,7 +10,7 @@
         },
         {
             "src": "/(.*)",
-            "dest": "GreenRoute/wsgi.py"
+            "dest": "Core/wsgi.py"
         }
     ]
 }
