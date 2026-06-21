@@ -1,7 +1,7 @@
 from django.apps import AppConfig
 import osmnx as ox
 import os
-from django.conf import settings
+from django.conf import settings    
 
 class MainConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
