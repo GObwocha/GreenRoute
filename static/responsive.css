@@ -1,0 +1,373 @@
+/* =====================================================
+TABLETS
+===================================================== */
+
+@media screen and (max-width:1024px){
+
+    .content-container{
+        padding:20px;
+    }
+
+    .stats-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+}
+
+
+/* =====================================================
+PHONES
+===================================================== */
+
+@media screen and (max-width:768px){
+
+    /* General */
+
+    *{
+        box-sizing:border-box;
+    }
+
+    img{
+        max-width:100%;
+        height:auto;
+    }
+
+    p{
+        word-wrap:break-word;
+    }
+
+
+    /* Content */
+
+    .content-container{
+        padding:15px;
+        width:100%
+    }
+
+    .container{
+        padding-left:15px;
+        padding-right:15px;
+    }
+
+
+    /* Titles */
+
+    h1{
+        font-size:1.6rem;
+    }
+
+    h2{
+        font-size:1.3rem;
+    }
+
+    h3{
+        font-size:1.1rem;
+    }
+
+    .page-title{
+        font-size:18px;
+    }
+
+
+    /* Forms */
+
+    input,
+    select,
+    textarea{
+        width:100%;
+    }
+
+
+    /* Buttons */
+
+    button{
+        max-width:100%;
+    }
+
+
+    /* Tables */
+
+    .table-wrapper{
+        overflow-x:auto;
+    }
+
+    table{
+        display:block;
+        overflow-x:auto;
+        white-space:nowrap;
+    }
+
+
+    /* Cards */
+
+    .card,
+    .glass-card{
+        width:100%;
+    }
+
+    .stats-grid,
+    .dashboard-grid{
+        grid-template-columns:1fr;
+        gap:20px;
+    }
+
+
+    /* Flex */
+
+    .d-flex{
+        flex-wrap:wrap;
+    }
+
+    .user-profile{
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:10px;
+    flex-wrap:nowrap
+    }
+
+    /* =================================
+    ECO PLANNER POPUP
+    ================================= */
+
+    .floating-panel{
+        position:fixed;
+        left:12px;
+        right:12px;
+        bottom:12px;
+        top:auto;
+        width:auto;
+        max-width:none;
+        max-height:40vh;
+        overflow-y:auto;
+        z-index:3000;
+        border-radius:20px 20px 0 0;
+        box-shadow:
+            0 -10px 30px rgba(0,0,0,.25);
+    }
+
+    /* Route planner */
+
+    .route-form input,
+    .route-form select,
+    .route-form button{
+        width:100%;
+    }
+
+
+    .route-controls{
+        display:flex;
+        flex-direction:column;
+        gap:15px;
+    }
+
+
+    /* Map */
+
+    #map{
+        height:50vh;
+        min-height:350px;
+        width:100%;
+    }
+
+
+    .nodes-overview-grid{
+        grid-template-columns:1fr ;
+    } 
+    
+    .user-profile a{
+        margin-left:0;
+        white-space:nowrap;
+        font-size:13px;
+    }
+
+    /* =================================
+    SIDEBAR
+    ================================= */
+
+    .sidebar{
+        width:0;
+        min-width:0;
+        overflow:hidden;
+    }
+
+
+    .main-wrapper{
+        margin-left:0;
+    }
+
+    /* =================================
+    FULL-WIDTH MOBILE LAYOUT
+    ================================= */
+
+    .main-content,
+    .main-wrapper,
+    .content-container,
+    .container,
+    .dashboard-container{
+        width:100%;
+        max-width:none;
+        margin-left:0;
+        margin-right:0;
+        padding-left:12px;
+        padding-right:12px;
+    }
+
+
+    /* Cards */
+
+    .card,
+    .glass-card{
+        width:100% ;
+        max-width:none ;
+    }
+
+
+    /* Any Bootstrap rows */
+
+    .row{
+        margin-left:0 ;
+        margin-right:0 ;
+    }
+
+    /* =========================
+    MOBILE SIDEBAR
+    ========================= */
+
+    .mobile-menu-btn{
+        display:block;
+        background:none;
+        border:none;
+        color:var(--text-main);
+        font-size:20px;
+        width:auto ;
+        cursor:pointer;
+    }
+
+
+    .sidebar{
+        position:fixed;
+        left:-260px;
+        top:0;
+        width:260px ;
+        height:100vh;
+        z-index:5000;
+        transition:.3s ease;
+    }
+
+
+    .sidebar.mobile-active{
+        left:0;
+        overflow-y:auto;
+    }
+
+    /* restore text labels */
+    .sidebar.mobile-active .menu-text,
+    .sidebar.mobile-active span{
+        display:inline;
+        opacity:1;
+        visibility:visible;
+    }
+
+
+    /* restore sidebar width */
+    .sidebar.mobile-active .sidebar-menu a{
+        justify-content:flex-start;
+        gap:12px;
+    }
+
+
+    /* ensure links are readable */
+    .sidebar.mobile-active a{
+        color:var(--text-main);
+    }
+
+
+    /* restore logo section */
+    .sidebar.mobile-active .sidebar-header{
+        display:flex;
+    }
+
+    /* =================================
+    OVERLAY
+    ================================= */
+    .sidebar-overlay{
+        position:fixed;
+        inset:0;
+        background:rgba(0,0,0,.45);
+        opacity:0;
+        visibility:hidden;
+        transition:.3s;
+        z-index:4000;
+    }
+
+    .sidebar-overlay.active{
+        opacity:1;
+        visibility:visible;
+    }
+    
+    /* =================================
+    ADMIN CHAT
+    ================================= */
+    .chat-container{
+        flex-direction:column;
+        height:auto;
+    }
+
+
+    /* Client list */
+    .chat-container > div:first-child{
+        width:100%;
+        max-height:220px;
+        overflow-y:auto;
+        border-right:none;
+        border-bottom:1px solid var(--border-color);
+    }
+
+
+    /* Conversation */
+    .chat-container > div:last-child{
+        width:100%;
+        min-height:500px;
+    }
+
+
+    /* Message area */
+    .message{
+        max-width:85%;
+    }
+
+
+    /* Send form */
+    .chat-input form{
+        flex-direction:column;
+        gap:12px;
+    }
+
+
+    .chat-input button{
+        width:100% ;
+        min-height:48px;
+        padding:12px 20px;
+        font-size:15px;
+        border-radius:12px;
+        margin-top:10px;
+    }
+}
+
+
+/* =====================================================
+SMALL PHONES
+===================================================== */
+
+@media screen and (max-width:600px){
+
+    .page-title{
+        font-size:16px;
+    }
+
+    button{
+        width:100%;
+    }
+
+}
