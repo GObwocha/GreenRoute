@@ -20,11 +20,23 @@
         </ul>
     </aside>
 
+    <div class="sidebar-overlay"
+    onclick="
+    document.querySelector('.sidebar').classList.remove('mobile-active');
+    this.classList.remove('active');
+    "></div>
+
     <!-- Main Content -->
     <div class="main-wrapper" style="position: relative;">
         <!-- Top Navbar -->
         <header class="top-navbar" style="position: absolute; top: 0; left: 0; right: 0; z-index: 1000; background: rgba(11, 15, 25, 0.8); backdrop-filter: blur(10px);">
-            <h1 class="page-title">{% block client_title %}Client Portal{% endblock %}</h1>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <button class="mobile-menu-btn" onclick="document.querySelector('.sidebar').classList.toggle('mobile-active');document.querySelector('.sidebar-overlay').classList.toggle('active');">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+
+                <h1 class="page-title">{% block client_title %}Client Portal{% endblock %}</h1>
+            </div>
             <div class="user-profile">
                 <button id="theme-toggle" title="Toggle Theme" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px; margin-right: 12px; transition: color 0.2s;"><i class="fa-solid fa-moon"></i></button>
                 <span style="font-size: 14px; color: var(--text-muted);">Welcome, <strong style="color: var(--text-main);">{{ request.user.username }}</strong></span>
