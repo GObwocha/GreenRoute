@@ -6,6 +6,7 @@ urlpatterns = [
     path('', views.client_dashboard, name='client_dashboard'),
     path('api/route/', views.calculate_route, name='calculate_route'),
     path('api/search-location/', views.search_location, name='search_location'),
+    path('api/reverse-geocode/', views.reverse_geocode, name='reverse_geocode'),
     path('client/login/', views.client_login_view, name='client_login'),
     path('client/logout/', views.client_logout_view, name='client_logout'),
     path('client/history/', views.client_history, name='client_history'),

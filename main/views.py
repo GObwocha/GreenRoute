@@ -161,6 +161,51 @@ def search_location(request):
             "message": f"Location search failed: {str(e)}"
         }, status=500)
 
+def reverse_geocode(request):
+    """
+    Reverse geocode coordinates using Photon (Komoot).
+    Returns display name for a given lat and lng.
+    """
+    lat = request.GET.get('lat')
+    lng = request.GET.get('lng')
+
+    if not lat or not lng:
+        return JsonResponse({
+            "status": "error",
+            "message": "Missing coordinates. Please provide lat and lng."
+        }, status=400)
+
+    try:
+        url = "https://photon.komoot.io/reverse"
+        params = {'lat': lat, 'lon': lng}
+        headers = {'User-Agent': 'GreenRoute-EcoRouter/1.0'}
+        response = requests.get(url, params=params, headers=headers, timeout=5)
+        response.raise_for_status()
+        data = response.json()
+        features = data.get('features', [])
+
+        display_name = "Current Location"
+        if features:
+            props = features[0].get('properties', {})
+            name_parts = []
+            if props.get('name'): name_parts.append(props.get('name'))
+            if props.get('street'): name_parts.append(props.get('street'))
+            if props.get('district'): name_parts.append(props.get('district'))
+            if props.get('city'): name_parts.append(props.get('city'))
+            if name_parts:
+                display_name = ", ".join(name_parts)
+
+        return JsonResponse({
+            "status": "success",
+            "display_name": display_name
+        })
+    except Exception as e:
+        return JsonResponse({
+            "status": "error",
+            "display_name": "Current Location",
+            "message": str(e)
+        }, status=200)
+
 def calculate_route(request):
     #1. Safely grab data from URL
     start_lat_raw = request.GET.get('start_lat')

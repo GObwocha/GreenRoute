@@ -65,6 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 themeToggle.innerHTML = '<i class="fa-solid fa-moon"></i>';
             }
             localStorage.setItem('greenroute-theme', theme);
+            window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme } }));
         });
     }
 });
@@ -80,11 +81,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const map = L.map('eco-map', { zoomControl: false }).setView([-1.2921, 36.8219], 13);
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    // Add Standard OpenStreetMap Tiles as a fallback
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-        maxZoom: 19
+    // Carto Basemaps (Production-ready tile provider adhering to OSM usage policies)
+    const darkTileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+    const lightTileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+    const isLight = document.body.classList.contains('theme-light') || localStorage.getItem('greenroute-theme') === 'light';
+
+    const currentTileLayer = L.tileLayer(isLight ? lightTileUrl : darkTileUrl, {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 20
     }).addTo(map);
+
+    window.addEventListener('themeChanged', (e) => {
+        const url = e.detail.theme === 'light' ? lightTileUrl : darkTileUrl;
+        currentTileLayer.setUrl(url);
+    });
 
     // Force map to recalculate its size after the container is fully rendered
     setTimeout(() => map.invalidateSize(), 250);
@@ -168,12 +179,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         // Reverse geocoding to get actual place name
                         try {
-                            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+                            const response = await fetch(`/api/reverse-geocode/?lat=${lat}&lng=${lng}`);
                             const data = await response.json();
                             if (data && data.display_name) {
-                                // Simplify name to just the first few components
-                                const parts = data.display_name.split(',').map(s => s.trim());
-                                name = parts.slice(0, 3).join(', ');
+                                name = data.display_name;
                             }
                         } catch (err) {
                             console.error("Reverse geocoding failed", err);
