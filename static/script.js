@@ -82,8 +82,8 @@ document.addEventListener('DOMContentLoaded', () => {
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
     // Carto Basemaps (Production-ready tile provider adhering to OSM usage policies)
-    const darkTileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-    const lightTileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+    const darkTileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=CARTO_API_KEY';
+    const lightTileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=CARTO_API_KEY';
     const isLight = document.body.classList.contains('theme-light') || localStorage.getItem('greenroute-theme') === 'light';
 
     const currentTileLayer = L.tileLayer(isLight ? lightTileUrl : darkTileUrl, {
