@@ -6,6 +6,10 @@
  * validation logic here.
  */
 
+//Loading the dotenv file
+require('dotenv').config();
+const CARTO_API_KEY = process.env.CARTO_API_KEY
+
 // Test variable to verify script is loading
 window.greenRouteLoaded = true;
 
@@ -82,8 +86,10 @@ document.addEventListener('DOMContentLoaded', () => {
     L.control.zoom({ position: 'bottomright' }).addTo(map);
 
     // Carto Basemaps (Production-ready tile provider adhering to OSM usage policies)
-    const darkTileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=CARTO_API_KEY';
-    const lightTileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=CARTO_API_KEY';
+    require('dotenv').config(); // Make sure this is at the top of your file
+
+    const darkTileUrl = `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=${process.env.CARTO_API_KEY}`;
+    const lightTileUrl = `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`;
     const isLight = document.body.classList.contains('theme-light') || localStorage.getItem('greenroute-theme') === 'light';
 
     const currentTileLayer = L.tileLayer(isLight ? lightTileUrl : darkTileUrl, {

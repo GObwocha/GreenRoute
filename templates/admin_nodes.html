@@ -68,6 +68,8 @@
 
 {% if bbox %}
 <script>
+require('dotenv').config();
+CARTO_API_KEY = os.getenv('CARTO_API_KEY', '')
 document.addEventListener('DOMContentLoaded', function() {
     var minLat = Number('{{ bbox.min_lat }}');
     var maxLat = Number('{{ bbox.max_lat }}');
@@ -83,8 +85,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Determine map theme based on body class
     var isLight = document.body.classList.contains('theme-light') || localStorage.getItem('greenroute-theme') === 'light';
     var tileUrl = isLight 
-        ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=CARTO_API_KEY'
-        : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=CARTO_API_KEY';
+        ? `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`
+        : `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`;
         
     var tiles = L.tileLayer(tileUrl, {
         attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
@@ -231,8 +233,8 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(function() {
                 var newIsLight = document.body.classList.contains('theme-light');
                 var newUrl = newIsLight 
-                    ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=CARTO_API_KEY'
-                    : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=CARTO_API_KEY';
+                    ? `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`
+                    : `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`;
                 tiles.setUrl(newUrl);
             }, 50);
         });
