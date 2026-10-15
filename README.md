@@ -104,6 +104,7 @@ Defined in `.env` (see `.env.example`):
 | `SECRET_KEY` | Django secret key |
 | `DEBUG` | `True`/`False` — set `False` in production |
 | `TOMTOM_API_KEY` | API key from [TomTom Developer Portal](https://developer.tomtom.com/) for live traffic data (optional — routing falls back gracefully without it) |
+| `CARTO_API_KEY` | API key from [CARTO Basemaps](https://carto.com/basemaps/apikey) for tile maps without watermarks (optional) |
 
 ### Regenerating the Road Map (optional)
 

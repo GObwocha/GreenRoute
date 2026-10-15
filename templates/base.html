@@ -38,6 +38,9 @@
 
     <!-- Leaflet Maps API JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script>
+        window.CARTO_API_KEY = "{{ CARTO_API_KEY|default:'' }}";
+    </script>
     <!-- Global Javascript Hooks -->
     <script src="{% static 'script.js' %}?v=1.2"></script>
     {% block extra_js %}{% endblock %}

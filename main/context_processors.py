@@ -1,3 +1,4 @@
+from django.conf import settings
 from .models import DirectMessage
 
 def unread_messages_count(request):
@@ -8,3 +9,9 @@ def unread_messages_count(request):
             count = DirectMessage.objects.filter(receiver=request.user, is_read=False).count()
         return {'unread_messages_count': count}
     return {'unread_messages_count': 0}
+
+def carto_api_key(request):
+    return {
+        'CARTO_API_KEY': getattr(settings, 'CARTO_API_KEY', '')
+    }
+

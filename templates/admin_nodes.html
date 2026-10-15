@@ -84,9 +84,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Determine map theme based on body class
     var isLight = document.body.classList.contains('theme-light') || localStorage.getItem('greenroute-theme') === 'light';
-    var tileUrl = isLight 
-        ? `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`
-        : `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`;
+    var cartoKey = (window.CARTO_API_KEY || '{{ CARTO_API_KEY|default:"" }}').trim();
+    var keyParam = cartoKey ? `?key=${encodeURIComponent(cartoKey)}` : '';
+    var darkTileUrl = `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png${keyParam}`;
+    var lightTileUrl = `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png${keyParam}`;
+    var tileUrl = isLight ? lightTileUrl : darkTileUrl;
         
     var tiles = L.tileLayer(tileUrl, {
         attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
@@ -232,9 +234,7 @@ document.addEventListener('DOMContentLoaded', function() {
         themeBtn.addEventListener('click', function() {
             setTimeout(function() {
                 var newIsLight = document.body.classList.contains('theme-light');
-                var newUrl = newIsLight 
-                    ? `https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`
-                    : `https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=${CARTO_API_KEY}`;
+                var newUrl = newIsLight ? lightTileUrl : darkTileUrl;
                 tiles.setUrl(newUrl);
             }, 50);
         });

@@ -32,6 +32,9 @@ DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 't')
 ALLOWED_HOSTS = ['.up.railway.app', 'localhost', '127.0.0.1']
 CSRF_TRUSTED_ORIGINS = ['https://*.up.railway.app']
 
+# CARTO Basemaps API Key
+CARTO_API_KEY = os.getenv('CARTO_API_KEY', '')
+
 
 # Application definition
 
@@ -73,6 +76,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'main.context_processors.unread_messages_count',
+                'main.context_processors.carto_api_key',
             ],
         },
     },
